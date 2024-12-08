@@ -1,0 +1,733 @@
+import { Button, VerticalBox, HorizontalBox, ListView, GridBox } from "std-widgets.slint";
+
+import "assets/SourceHanSans-Regular.ttc";
+
+export struct Date {
+    year: int,
+    month: int,
+    day: int,
+}
+
+export struct Time {
+    hour: int,
+    minute: int,
+    second: int,
+}
+
+export struct TodoItemData {
+    text: string,
+    start-time: Time,
+    end-time: Time,
+    active: bool,
+    show-time: bool,
+}
+
+export struct TodoItemGroupData {
+    group-name: string,
+    items: [TodoItemData],
+    active: bool,
+}
+
+component Clock {
+    in-out property <Time> time;
+    in-out property <string> date-string;
+    in-out property <bool> use-24-hour: false;
+    in-out property <bool> second-blink-on: true;
+    in-out property <brush> highlight-color: #FFFFFF;
+    in-out property <brush> active-color: #FFFFFFC0;
+    in-out property <string> font-family;
+    in-out property <length> time-font-size: 60px;
+    in-out property <length> date-font-size: 24px;
+    in-out property <[string]> time-range-tags: [
+        "深夜", // 00
+        "深夜", // 01
+        "深夜", // 02
+        "凌晨", // 03
+        "凌晨", // 04
+        "凌晨", // 05
+        "早晨", // 06
+        "早晨", // 07
+        "上午", // 08
+        "上午", // 09
+        "上午", // 10
+        "上午", // 11
+        "中午", // 12
+        "下午", // 13
+        "下午", // 14
+        "下午", // 15
+        "下午", // 16
+        "下午", // 17
+        "傍晚", // 18
+        "傍晚", // 19
+        "晚上", // 20
+        "晚上", // 21
+        "晚上", // 22
+        "深夜", // 23
+    ];
+
+    private property <bool> am: self.time.hour < 12;
+    private property <string> time-range-tag: self.get-time-range-tag(self.time.hour);
+
+    pure function format-number(n: int) -> string {
+        return n < 10 ? "0" + n : n;
+    }
+
+    pure function get-time-range-tag(hour: int) -> string {
+        return self.time-range-tags[hour];
+    }
+
+    pure function format-hour(n: int, use-24: bool) -> string {
+        if use-24 {
+            return format-number(n);
+        }
+        if n == 0 {
+            return "12";
+        }
+        if n > 12 {
+            return n - 12;
+        }
+        return n;
+    }
+
+    function format-time() -> string {
+        if self.use-24-hour {
+            return format-number(self.time.hour) + ":" + format-number(self.time.minute) + ":" + format-number(self.time.second);
+        }
+        if self.am {
+            return format-hour(self.time.hour, self.use-24-hour) + ":" + format-number(self.time.minute) + ":" + format-number(self.time.second);
+        }
+        return format-hour(self.time.hour - 12, false) + ":" + format-number(self.time.minute) + ":" + format-number(self.time.second);
+    }
+
+    VerticalLayout {
+        HorizontalLayout {
+            Text {
+                width: 70px;
+                height: 50px;
+                text: root.format-hour(root.time.hour, root.use-24-hour);
+                font-family: root.font-family;
+                font-size: time-font-size;
+                color: root.highlight-color;
+                horizontal-alignment: right;
+                vertical-alignment: center;
+            }
+
+            Image {
+                height: 50px;
+                width: 20px;
+                image-fit: cover;
+                source: @image-url("assets/colon.svg");
+                vertical-alignment: center;
+            }
+
+            Text {
+                width: 70px;
+                height: 50px;
+                text: root.format-number(root.time.minute);
+                font-family: root.font-family;
+                font-size: time-font-size;
+                color: root.highlight-color;
+                horizontal-alignment: right;
+                vertical-alignment: center;
+            }
+
+            VerticalLayout {
+                Rectangle {
+                    width: 15px;
+                    height: 6px;
+                }
+
+                HorizontalLayout {
+                    Rectangle {
+                        height: 20px;
+                        width: 5px;
+                    }
+
+                    Image {
+                        width: 15px;
+                        height: 25px;
+                        image-fit: cover;
+                        source: @image-url("assets/colon.svg");
+                        opacity: 0.7 * (root.second-blink-on ? 1 : 0);
+                        vertical-alignment: center;
+                    }
+
+                    Text {
+                        width: 30px;
+                        height: 25px;
+                        text: root.format-number(root.time.second);
+                        font-family: root.font-family;
+                        font-size: time-font-size / 2.5;
+                        color: root.active-color;
+                        horizontal-alignment: left;
+                        vertical-alignment: center;
+                    }
+                }
+
+                Rectangle {
+                    height: 20px;
+                    width: 15px;
+                }
+            }
+            Rectangle {
+                min-width: 10px;
+                horizontal-stretch: 1;
+            }
+
+            Text {
+                text: time-range-tag + "    ";
+                font-family: root.font-family;
+                font-size: date-font-size;
+                color: root.active-color;
+                horizontal-alignment: center;
+                visible: !root.use-24-hour;
+            }
+        }
+        HorizontalBox {
+            height: 30px;
+            Rectangle {
+                width: 10px;
+                height: 10px;
+            }
+            Text {
+                text: root.date-string;
+                font-family: root.font-family;
+                font-size: 24px;
+                color: root.active-color;
+                horizontal-alignment: left;
+            }
+        }
+    }
+}
+
+component MonthView {
+    in-out property <Date> today;
+    in-out property <[string]> weekday-names: ["日", "一", "二", "三", "四", "五", "六"];
+    in-out property <color> weekday-color: lightgray;
+    in-out property <color> today-color: lightgray;
+    in-out property <color> day-color: lightgray;
+    in-out property <color> today-background-color: #FFFFFF40;
+    in-out property <color> day-background-color: #00000000;    // transparent
+    in-out property <string> font-family;
+    in-out property <length> font-size: 20px;
+
+    private property <int> is-leap-year: self.check-leap-year(self.today.year) ? 1 : 0;
+    private property <[int]> days-in-month: [31, 28 + self.is-leap-year, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    private property <int> current-weekday: self.get-weekday(self.today.year, self.today.month, self.today.day);
+    private property <int> current-month-days: self.days-in-month[today.month - 1];
+    private property <int> start-day: self.get-weekday(self.today.year, self.today.month, 1);
+    private property <int> end-day: self.get-weekday(self.today.year, self.today.month, current-month-days);
+
+    pure function check-leap-year(year: int) -> bool {
+        if Math.mod(year, 4) == 0 {
+            if Math.mod(year, 100) == 0 {
+                return Math.mod(year, 400) == 0;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    pure function get-weekday(year: int, month: int, day: int) -> int {
+    // Zeller's Congruence
+    return mod((mod(year,100) + floor(mod(year,100) / 4) + floor(floor(year / 100) / 4) - 2 * floor(year / 100) + floor(26 * (month + 1) / 10) + day - 1), 7);
+    }
+
+    pure function get-line-num() -> int {
+        return ceil((self.current-month-days + self.start-day) / 7);
+    }
+
+    pure function get-line-length(index: int) -> int {
+        if index == 0 {
+            return 7 - self.start-day;
+        }
+        return ((current-month-days - (7 - self.start-day)) / 7 / index) >= 1 ? 7 : (end-day + 1);
+    }
+
+    pure function get-day(item: int, index: int) -> int {
+        return ((item + 1) + index * 7) - (index == 0 ? 0 : self.start-day);
+    }
+
+    pure function day-at-cell(row: int, col: int) -> int {
+        return (row * 7) + col - self.start-day + 1;
+    }
+
+    pure function format-day(day: int) -> string {
+        if day > 0 && day <= self.current-month-days {
+            return day;
+        }
+        return "";
+    }
+
+    VerticalLayout {
+        HorizontalLayout {
+            width: 100%;
+            height: 30px;
+            for day in weekday-names: Text {
+                text: day;
+                font-family: root.font-family;
+                font-size: root.font-size;
+                color: root.weekday-color;
+                width: 14.28%;
+                height: parent.height;
+                vertical-alignment: center;
+                horizontal-alignment: center;
+            }
+        }
+
+        Rectangle {
+            width: 100%;
+            height: 1px;
+            background: today-background-color;
+        }
+
+        for row in 6: HorizontalLayout {
+            width: 100%;
+            height: 30px;
+            for col in 7: Rectangle {
+                width: 14.28%;
+                height: parent.height;
+                background: day-at-cell(row, col) == root.today.day ? root.today-background-color : root.day-background-color;
+                border-radius: 5px;
+                Text {
+                    text: format-day(day-at-cell(row, col));
+                    font-family: root.font-family;
+                    font-size: root.font-size;
+                    width: parent.width;
+                    height: parent.height;
+                    vertical-alignment: center;
+                    horizontal-alignment: center;
+                    color: day-at-cell(row, col) == root.today.day ? root.today-color : root.day-color;
+                }
+            }
+        }
+    }
+}
+
+component Weather {
+    width: 100%;
+    height: 80px;
+    in-out property <int> temperature;
+    in-out property <int> high;
+    in-out property <int> low;
+    in-out property <image> weather-icon;
+    in-out property <string> high-tag: "最高";
+    in-out property <string> low-tag: "最低";
+    in-out property <string> unit: "°C";
+    in-out property <string> font-family;
+    in-out property <brush> text-color: lightgray;
+
+    private property <string> temp-text: temperature + unit;
+    private property <string> high-text: high + unit;
+    private property <string> low-text: low + unit;
+
+    horizontal-stretch: 0;
+    Rectangle {
+        width: 100%;
+        height: 100px;
+        VerticalLayout {
+            width: 100%;
+            height: 100%;
+            HorizontalBox {
+                width: 100%;
+                Text {
+                    height: 35px;
+                    text: root.temp-text;
+                    font-family: root.font-family;
+                    font-size: 28px;
+                    color: root.text-color;
+                    horizontal-alignment: right;
+                    vertical-alignment: bottom;
+                }
+
+                Image {
+                    vertical-alignment: center;
+                    horizontal-alignment: center;
+                    width: 32px;
+                    height: 32px;
+                    colorize: white;
+                    source: root.weather-icon;
+                }
+            }
+
+            HorizontalLayout {
+                Text {
+                    text: root.high-tag + ": " + root.high-text + "   " + root.low-tag + ": " + root.low-text;
+                    font-family: root.font-family;
+                    font-size: 20px;
+                    color: root.text-color;
+                    horizontal-alignment: right;
+                    vertical-alignment: center;
+                }
+                Rectangle {
+                    width: 15px;
+                    height: 10px;
+                    background: #00000000;
+                }
+            }
+        }
+    }
+}
+
+component TodoItem {
+    height: 65px;
+    in-out property <string> text;
+    in-out property <Time> start-time;
+    in-out property <Time> end-time;
+    in-out property <Time> current-time;
+    in-out property <bool> active;
+    in-out property <bool> show-time;
+    in-out property <color> major-text-color;
+    in-out property <color> minor-text-color;
+    in-out property <color> background-color;
+    in-out property <color> active-background-color;
+    in-out property <string> font-family;
+
+    private property <color> background: is-current ? active-background-color : background-color;
+    private property <bool> is-current: current >= start && current <= end && active;
+    private property <int> start: start-time.hour * 3600 + start-time.minute * 60 + start-time.second;
+    private property <int> end: end-time.hour * 3600 + end-time.minute * 60 + end-time.second;
+    private property <int> current: current-time.hour * 3600 + current-time.minute * 60 + current-time.second;
+
+    pure function format-number(n: int) -> string {
+        return n < 10 ? "0" + n : n;
+    }
+
+    pure function format-time(time: Time) -> string {
+        return format-number(time.hour) + ":" + format-number(time.minute);
+    }
+
+    Rectangle {
+        width: root.width - 20px;
+        height: root.height;
+        background: @linear-gradient(90deg, background 0%, background 15%, #00000000 40%);
+        border-top-left-radius: 5px;
+        border-bottom-left-radius: 5px;
+        Rectangle {
+            width: 10px;
+            height: 70px;
+            background: #00000000;
+        }
+
+        Rectangle {
+            width: 100%;
+            height: 1px;
+            padding-top: 14px;
+            background: #FFFFFF80;
+            visible: !root.active;
+        }
+
+        HorizontalLayout {
+            height: root.height;
+            VerticalBox {
+                width: root.show-time ? 80px : 10px;
+                height: root.height;
+                visible: root.show-time;
+                Text {
+                    text: format-time(root.start-time);
+                    height: root.height /2 - 22px ;
+                    font-family: root.font-family;
+                    font-size: 20px;
+                    color: root.active ? major-text-color : minor-text-color;
+                    vertical-alignment: center;
+                    horizontal-alignment: left;
+                }
+
+                Text {
+                    text: format-time(root.end-time);
+                    height: root.height /2 - 10px ;
+                    font-family: root.font-family;
+                    font-size: 16px;
+                    color: minor-text-color;
+                    vertical-alignment: center;
+                    horizontal-alignment: left;
+                }
+            }
+
+            Rectangle {
+                width: 100%;
+                height: root.height - 5px;
+                clip: true;
+                Text {
+                    width: 100%;
+                    text: root.text;
+                    font-family: root.font-family;
+                    font-size: 28px;
+                    vertical-alignment: center;
+                    horizontal-alignment: left;
+                    color: root.active ? major-text-color : minor-text-color;
+                }
+            }
+        }
+    }
+}
+
+component TodoItemGroup {
+    in-out property <string> group-name;
+    in-out property <bool> active;
+    in-out property <Time> current-time;
+    in-out property <[TodoItemData]> items;
+    in-out property <color> major-text-color;
+    in-out property <color> minor-text-color;
+    in-out property <color> background-color;
+    in-out property <color> active-background-color;
+    in-out property <string> font-family;
+
+    out property <length> calculated-height: items.length * 70px + 50px;
+    height: calculated-height;
+    VerticalLayout {
+        width: root.width;
+        height: parent.calculated-height;
+
+        HorizontalLayout {
+            width: root.width;
+            height: 20px;
+            Rectangle {
+                width: 20px;
+                height: 20px;
+            }
+
+            Text {
+                width: 100%;
+                height: 20px;
+                text: root.group-name;
+                font-family: root.font-family;
+                font-size: 20px;
+                vertical-alignment: center;
+                horizontal-alignment: left;
+                color: root.active ? major-text-color : minor-text-color;
+            }
+        }
+
+        VerticalBox {
+            width: root.width;
+            height: root.items.length * 75px;
+            for data in root.items: VerticalLayout {
+                TodoItem {
+                    text: data.text;
+                    start-time: data.start-time;
+                    end-time: data.end-time;
+                    current-time: root.current-time;
+                    active: data.active && root.active;
+                    show-time: data.show-time;
+                    major-text-color: root.major-text-color;
+                    minor-text-color: root.minor-text-color;
+                    background-color: root.background-color;
+                    active-background-color: root.active-background-color;
+                    font-family: root.font-family;
+                }
+            }
+        }
+    }
+}
+
+component TodoList {
+    in-out property <[TodoItemGroupData]> groups;
+    in-out property <Time> current-time;
+    in-out property <color> major-text-color: #FFFFFF;
+    in-out property <color> minor-text-color: #FFFFFF80;
+    in-out property <color> background-color: #00000000;
+    in-out property <color> active-background-color;
+    in-out property <string> font-family;
+
+    ListView {
+        width: root.width;
+        height: root.height;
+        for data in root.groups: VerticalLayout {
+            TodoItemGroup {
+                group-name: data.group-name;
+                current-time: root.current-time;
+                items: data.items;
+                active: data.active;
+                major-text-color: root.major-text-color;
+                minor-text-color: root.minor-text-color;
+                background-color: root.background-color;
+                active-background-color: root.active-background-color;
+                font-family: root.font-family;
+            }
+        }
+    }
+}
+
+export component AppWindow inherits Window {
+    width: 800px;
+    height: 480px;
+    // width: 2560px;
+    // height: 1440px;
+    Image {
+        image-fit: cover;
+        width: 100%;
+        height: 100%;
+        source: AppData.background;
+    }
+
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        background: #000000;
+        opacity: AppData.background-dim;
+    }
+
+    HorizontalBox {
+        width: 100%;
+        height: 100%;
+        VerticalBox {
+            width: 40%;
+            height: 100%;
+            Clock {
+                height: 120px;
+                use-24-hour: AppData.use-24-hour;
+                second-blink-on: AppData.second-blink-on;
+                time: AppData.current-time;
+                date-string: AppData.date-string;
+                font-family: AppData.font-family;
+                highlight-color: AppData.highlight-color;
+                active-color: AppData.active-color;
+            }
+
+            Rectangle {
+                width: 100%;
+                height: 5px;
+            }
+
+            MonthView {
+                today: AppData.current-date;
+                font-family: AppData.font-family;
+                day-color: AppData.active-color;
+                weekday-color: AppData.active-color;
+                today-color: AppData.highlight-color;
+                today-background-color: AppData.strong-background-color;
+            }
+
+            Weather {
+                temperature: AppData.temperature;
+                high: AppData.high;
+                low: AppData.low;
+                weather-icon: AppData.weather-icon;
+                font-family: AppData.font-family;
+                text-color: AppData.active-color;
+            }
+
+            Rectangle {
+                width: 100%;
+                height: 50px;
+            }
+        }
+
+        Rectangle {
+            width: 1px;
+            height: 100%;
+            background: AppData.light-background-color;
+        }
+
+        TodoList {
+            width: 60%;
+            height: 100%;
+            groups: AppData.todo-list;
+            current-time: AppData.current-time;
+            font-family: AppData.font-family;
+            major-text-color: AppData.active-color;
+            minor-text-color: AppData.inactive-color;
+            background-color: AppData.light-background-color;
+            active-background-color: AppData.strong-background-color;
+        }
+    }
+}
+
+export global AppData {
+    // Window
+    in-out property <string> font-family: "Source Han Sans";
+    in-out property <image> background: @image-url("assets/th1.jpeg");
+    in-out property <float> background-dim: 0.6;
+    in-out property <brush> highlight-color: #FFFFFF;
+    in-out property <brush> active-color: #FFFFFFC0;
+    in-out property <brush> inactive-color: #FFFFFF60;
+    in-out property <brush> strong-background-color: #FFFFFF40;
+    in-out property <brush> light-background-color: #FFFFFF20;
+
+    // Clock
+    in-out property <bool> use-24-hour: false;
+    in-out property <bool> second-blink-on: true;
+    in-out property <Time> current-time: { hour: 6, minute: 42, second: 15 };
+    in-out property <string> date-string: "2024年12月22日，星期五";
+
+    // Calendar
+    in-out property <Date> current-date: { year: 2024, month: 6, day: 7 };
+
+    // Weather
+    in-out property <int> temperature: 5;
+    in-out property <int> high: 10;
+    in-out property <int> low: -2;
+    in-out property <image> weather-icon: @image-url("assets/100.svg");
+
+    // To-do list
+    in-out property <[TodoItemGroupData]> todo-list: [
+        {
+            group-name: "12月3日 星期一",
+            items: [
+                {
+                    text: "汉字测试 Blah Blah Blah Blah",
+                    start-time: { hour: 4, minute: 0, second: 0 },
+                    end-time: { hour: 7, minute: 0, second: 0 },
+                    active: true,
+                    show-time: true,
+                },
+                {
+                    text: "Green",
+                    start-time: { hour: 8, minute: 0, second: 0 },
+                    end-time: { hour: 9, minute: 0, second: 0 },
+                    active: true,
+                    show-time: false,
+                },
+            ],
+            active: true,
+        },
+        {
+            group-name: "Todo List2",
+            items: [
+                {
+                    text: "Yellow",
+                    start-time: { hour: 8, minute: 0, second: 0 },
+                    end-time: { hour: 9, minute: 0, second: 0 },
+                    active: false,
+                    show-time: false,
+                },
+                {
+                    text: "Black",
+                    start-time: { hour: 8, minute: 0, second: 0 },
+                    end-time: { hour: 9, minute: 0, second: 0 },
+                    active: true,
+                    show-time: true,
+                },
+            ],
+            active: false,
+        },
+        {
+            group-name: "Todo List3",
+            items: [
+                {
+                    text: "White",
+                    start-time: { hour: 3, minute: 0, second: 0 },
+                    end-time: { hour: 9, minute: 0, second: 0 },
+                    active: false,
+                    show-time: true,
+                },
+                {
+                    text: "Magenta",
+                    start-time: { hour: 8, minute: 0, second: 0 },
+                    end-time: { hour: 9, minute: 0, second: 0 },
+                    active: true,
+                    show-time: true,
+                },
+                {
+                    text: "Cyan",
+                    start-time: { hour: 4, minute: 0, second: 0 },
+                    end-time: { hour: 9, minute: 0, second: 0 },
+                    active: true,
+                    show-time: true,
+                },
+            ],
+            active: true,
+        }
+    ];
+}
