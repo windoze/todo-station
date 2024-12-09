@@ -1,0 +1,31 @@
+# 默认配置文件的位置：
+# Linux: ~/.config/todo-station/config.toml
+# macOS: ~/Library/Application Support/todo-station/config.toml
+# Windows: %APPDATA%\todo-station\config.toml
+# 如果使用自定义配置文件，可以通过`--config`参数指定
+
+[window]
+weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
+# 格式中的`%A`会使用`weekdays`中的值替换
+date-format = "%Y年%m月%d日，%A"
+width = 800
+height = 480
+# 该选项在macOs下不能正常工作，请不要设置为true
+full-screen = false
+
+[weather]
+# 从`https://github.com/qwd/LocationList/blob/master/China-City-List-latest.csv`获取localtion id
+location = "101110113"
+# 登录和风天气官网，创建应用，获取以下参数，参见`https://dev.qweather.com/docs/configuration/project-and-key/`
+app-id = "AAAAAAAAAA"
+key-id = "BBBBBBBBBB"
+# 生成方式参见`https://dev.qweather.com/docs/authentication/jwt/`
+# 将生成的私钥内容填写到这里，不包含开头结尾的`-----BEGIN PRIVATE KEY-----`和`-----END PRIVATE KEY-----`
+signing-key = "MC4C.........."
+
+[todo]
+# 这个app id是作者生成的，首次使用时需要用户授权。该app id仅用于在获取用户日历信息时表明程序的身份，**作者不能通过它获取用户的隐私**
+# 如需生成新的app id，参见`https://docs.microsoft.com/zh-cn/azure/active-directory/develop/quickstart-register-app`
+# 创建app id后，在`API permissions`中添加`Microsoft Graph`的`Calendars.Read`、`offline_access`、`openid`、`profile`权限
+# 然后在`Authentication`中打开`Allow public client flows`选项
+app-id = "00df9c7d-7b32-4e89-9e3e-834fff775318"
