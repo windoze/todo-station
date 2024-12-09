@@ -652,86 +652,18 @@ export global AppData {
     // Clock
     in-out property <bool> use-24-hour: false;
     in-out property <bool> second-blink-on: true;
-    in-out property <Time> current-time: { hour: 6, minute: 42, second: 15 };
-    in-out property <string> date-string: "2024年12月22日，星期五";
+    in-out property <Time> current-time: { hour: 0, minute: 0, second: 0 };
+    in-out property <string> date-string: "";
 
     // Calendar
-    in-out property <Date> current-date: { year: 2024, month: 6, day: 7 };
+    in-out property <Date> current-date: { year: 2024, month: 1, day: 1 };
 
     // Weather
-    in-out property <int> temperature: 5;
-    in-out property <int> high: 10;
-    in-out property <int> low: -2;
-    in-out property <image> weather-icon: @image-url("assets/100.svg");
+    in-out property <int> temperature: 0;
+    in-out property <int> high: 0;
+    in-out property <int> low: 0;
+    in-out property <image> weather-icon;
 
     // To-do list
-    in-out property <[TodoItemGroupData]> todo-list: [
-        {
-            group-name: "12月3日 星期一",
-            items: [
-                {
-                    text: "汉字测试 Blah Blah Blah Blah",
-                    start-time: { hour: 4, minute: 0, second: 0 },
-                    end-time: { hour: 7, minute: 0, second: 0 },
-                    active: true,
-                    show-time: true,
-                },
-                {
-                    text: "Green",
-                    start-time: { hour: 8, minute: 0, second: 0 },
-                    end-time: { hour: 9, minute: 0, second: 0 },
-                    active: true,
-                    show-time: false,
-                },
-            ],
-            active: true,
-        },
-        {
-            group-name: "Todo List2",
-            items: [
-                {
-                    text: "Yellow",
-                    start-time: { hour: 8, minute: 0, second: 0 },
-                    end-time: { hour: 9, minute: 0, second: 0 },
-                    active: false,
-                    show-time: false,
-                },
-                {
-                    text: "Black",
-                    start-time: { hour: 8, minute: 0, second: 0 },
-                    end-time: { hour: 9, minute: 0, second: 0 },
-                    active: true,
-                    show-time: true,
-                },
-            ],
-            active: false,
-        },
-        {
-            group-name: "Todo List3",
-            items: [
-                {
-                    text: "White",
-                    start-time: { hour: 3, minute: 0, second: 0 },
-                    end-time: { hour: 9, minute: 0, second: 0 },
-                    active: false,
-                    show-time: true,
-                },
-                {
-                    text: "Magenta",
-                    start-time: { hour: 8, minute: 0, second: 0 },
-                    end-time: { hour: 9, minute: 0, second: 0 },
-                    active: true,
-                    show-time: true,
-                },
-                {
-                    text: "Cyan",
-                    start-time: { hour: 4, minute: 0, second: 0 },
-                    end-time: { hour: 9, minute: 0, second: 0 },
-                    active: true,
-                    show-time: true,
-                },
-            ],
-            active: true,
-        }
-    ];
+    in-out property <[TodoItemGroupData]> todo-list;
 }

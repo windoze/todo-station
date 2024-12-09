@@ -15,7 +15,7 @@ pub struct WindowConfig {
     pub full_screen: bool,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct WeatherConfig {
     pub location: String,
@@ -24,7 +24,7 @@ pub struct WeatherConfig {
     pub signing_key: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct TodoConfig {
     pub app_id: String,
@@ -54,25 +54,6 @@ impl Default for WindowConfig {
             width: 800,
             height: 480,
             full_screen: false,
-        }
-    }
-}
-
-impl Default for WeatherConfig {
-    fn default() -> Self {
-        Self {
-            location: "101110113".to_string(),
-            app_id: include_str!("../test/app-id.txt").trim().to_string(),
-            key_id: include_str!("../test/key-id.txt").trim().to_string(),
-            signing_key: include_str!("../test/ed25519-private.pem").to_string(),
-        }
-    }
-}
-
-impl Default for TodoConfig {
-    fn default() -> Self {
-        Self {
-            app_id: include_str!("../test/todo-app-id.txt").trim().to_string(),
         }
     }
 }
