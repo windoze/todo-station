@@ -1,149 +1,25 @@
 // Prevent console window in addition to Slint window in Windows release builds when, e.g., starting the app via file manager. Ignored on other platforms.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{
-    path::{Path, PathBuf},
-    time::Duration,
-};
+use std::{rc::Rc, time::Duration};
 
 use chrono::prelude::*;
 use clap::Parser;
-use platform_dirs::AppDirs;
-use serde::Deserialize;
-use slint::{Rgb8Pixel, SharedPixelBuffer, Weak};
+use slint::{ModelRc, Rgb8Pixel, SharedPixelBuffer, VecModel, Weak};
 use tokio::time::sleep;
 
+mod config;
+mod todo;
 mod wallpaper;
 mod weather;
 
+use config::{get_config, TodoConfig, WeatherConfig, WindowConfig};
 use wallpaper::get_wallpaper;
 use weather::get_weather;
 
 slint::include_modules!();
 
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-struct AppConfig {
-    pub weekdays: Vec<String>,
-    pub date_format: String,
-    pub width: i32,
-    pub height: i32,
-    pub full_screen: bool,
-
-    pub location: String,
-    pub app_id: String,
-    pub key_id: String,
-    pub signing_key: String,
-}
-
-impl Default for AppConfig {
-    fn default() -> Self {
-        Self {
-            weekdays: vec![
-                "星期日".to_string(),
-                "星期一".to_string(),
-                "星期二".to_string(),
-                "星期三".to_string(),
-                "星期四".to_string(),
-                "星期五".to_string(),
-                "星期六".to_string(),
-            ],
-            date_format: "%Y年%m月%d日，%A".to_string(),
-            width: 800,
-            height: 480,
-            full_screen: false,
-
-            location: "101110113".to_string(),
-            app_id: include_str!("../test/app-id.txt").trim().to_string(),
-            key_id: include_str!("../test/key-id.txt").trim().to_string(),
-            signing_key: include_str!("../test/ed25519-private.pem").to_string(),
-        }
-    }
-}
-
-impl AppConfig {
-    pub fn format_date(&self, date: &DateTime<Local>) -> String {
-        let binding = "".to_string();
-        let weekday = self
-            .weekdays
-            .get(date.weekday() as usize)
-            .unwrap_or(&binding);
-        // chrono does not support %A for locale weekday names
-        let format = self.date_format.replace("%A", weekday);
-        date.format(&format).to_string()
-    }
-}
-
-fn get_config_file() -> PathBuf {
-    let app_dirs = AppDirs::new(Some("todo-station"), false).unwrap();
-    app_dirs.config_dir.join("config.toml")
-}
-
-fn get_config<P: AsRef<Path>>(config_path: Option<P>) -> anyhow::Result<AppConfig> {
-    let config_path: PathBuf = config_path
-        .map(|p| p.as_ref().to_path_buf())
-        .unwrap_or(get_config_file());
-    let config = std::fs::read_to_string(&config_path).unwrap_or_default();
-    if config.is_empty() {
-        return Ok(AppConfig::default());
-    }
-    Ok(toml::from_str::<AppConfig>(&config)?)
-}
-
-fn main() -> anyhow::Result<()> {
-    #[derive(Debug, Clone, Parser)]
-    struct Args {
-        #[arg(long = "config")]
-        config_path: Option<std::path::PathBuf>,
-        #[command(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    }
-
-    let cli = Args::parse();
-
-    env_logger::Builder::new()
-        .filter_level(cli.verbose.log_level_filter())
-        .init();
-
-    let cfg = get_config(cli.config_path)?;
-
-    if cfg.full_screen {
-        std::env::set_var("SLINT_FULLSCREEN", "1");
-    }
-
-    let ui = AppWindow::new()?;
-
-    ui.global::<AppData>().set_width(cfg.width as f32);
-    ui.global::<AppData>().set_height(cfg.height as f32);
-    if cfg.full_screen {
-        ui.global::<AppData>().set_framed(false);
-    }
-
-    let rt = tokio::runtime::Runtime::new()?;
-
-    let handle = ui.as_weak();
-    rt.spawn(async move {
-        update_wallpaper(handle).await;
-    });
-
-    let handle = ui.as_weak();
-    let cfg_clone = cfg.clone();
-    rt.spawn(async move {
-        update_time(handle, cfg_clone).await;
-    });
-
-    let handle = ui.as_weak();
-    let cfg_clone = cfg.clone();
-    rt.spawn(async move {
-        update_weather(handle, cfg_clone).await;
-    });
-
-    ui.run()?;
-
-    Ok(())
-}
-
-async fn update_time(handle: Weak<AppWindow>, cfg: AppConfig) {
+async fn update_time(handle: Weak<AppWindow>, cfg: WindowConfig) {
     loop {
         // Update time every 100ms
         sleep(Duration::from_millis(100)).await;
@@ -172,9 +48,9 @@ async fn update_time(handle: Weak<AppWindow>, cfg: AppConfig) {
     }
 }
 
-async fn update_weather(handle: Weak<AppWindow>, cfg: AppConfig) {
+async fn update_weather(handle: Weak<AppWindow>, cfg: WeatherConfig) {
     loop {
-        // Update time every hour
+        // Update weather every hour
         if let Ok(weather) =
             get_weather(&cfg.location, &cfg.app_id, &cfg.key_id, &cfg.signing_key).await
         {
@@ -194,12 +70,24 @@ async fn update_weather(handle: Weak<AppWindow>, cfg: AppConfig) {
             }
         }
 
-        sleep(Duration::from_secs(3600)).await;
+        // Sleep until the next hour
+        let now = chrono::Local::now();
+        let begin_of_next_hour = now
+            .with_minute(0)
+            .unwrap()
+            .with_second(0)
+            .unwrap()
+            .with_nanosecond(0)
+            .unwrap()
+            + chrono::Duration::hours(1);
+        let duration = begin_of_next_hour - now;
+        sleep(duration.to_std().unwrap_or_default()).await;
     }
 }
 
 async fn update_wallpaper(handle: Weak<AppWindow>) {
     loop {
+        // Update wallpaper every day
         if let Ok(wallpaper) = get_wallpaper().await {
             handle
                 .upgrade_in_event_loop(move |ui| {
@@ -214,6 +102,130 @@ async fn update_wallpaper(handle: Weak<AppWindow>) {
                 .unwrap();
         }
 
-        sleep(Duration::from_secs(86400)).await;
+        // Sleep until the next 1AM UTC, it's about the time when the wallpaper changes
+        let now = chrono::Utc::now();
+        let next_1am = now
+            .with_hour(1)
+            .unwrap()
+            .with_minute(0)
+            .unwrap()
+            .with_second(0)
+            .unwrap()
+            .with_nanosecond(0)
+            .unwrap()
+            + chrono::Duration::days(1);
+        let duration = next_1am - now;
+        sleep(duration.to_std().unwrap_or_default()).await;
     }
+}
+
+impl From<todo::Time> for Time {
+    fn from(time: todo::Time) -> Self {
+        Self {
+            hour: time.hour,
+            minute: time.minute,
+            second: time.second,
+        }
+    }
+}
+
+impl From<todo::TodoItemData> for TodoItemData {
+    fn from(item: todo::TodoItemData) -> Self {
+        Self {
+            active: item.active,
+            end_time: item.end_time.into(),
+            show_time: item.show_time,
+            start_time: item.start_time.into(),
+            text: item.text.into(),
+        }
+    }
+}
+
+impl From<todo::TodoItemGroupData> for TodoItemGroupData {
+    fn from(list: todo::TodoItemGroupData) -> Self {
+        let items: Vec<TodoItemData> = list.items.into_iter().map(|item| item.into()).collect();
+        Self {
+            active: true,
+            items: ModelRc::from(Rc::new(VecModel::from(items))),
+            group_name: list.group_name.into(),
+        }
+    }
+}
+
+async fn update_todo(handle: Weak<AppWindow>, cfg: TodoConfig) {
+    loop {
+        // Update todo every 10 minutes
+        if let Ok(todo) = todo::get_todo_list(cfg.app_id.clone()).await {
+            handle
+                .upgrade_in_event_loop(move |ui| {
+                    let groups: Vec<TodoItemGroupData> =
+                        todo.into_iter().map(|list| list.into()).collect();
+                    ui.global::<AppData>()
+                        .set_todo_list(ModelRc::from(Rc::new(VecModel::from(groups))));
+                })
+                .unwrap();
+        }
+
+        // Sleep for 10 minutes
+        sleep(Duration::from_secs(600)).await;
+    }
+}
+
+fn main() -> anyhow::Result<()> {
+    #[derive(Debug, Clone, Parser)]
+    struct Args {
+        #[arg(long = "config")]
+        config_path: Option<std::path::PathBuf>,
+        #[command(flatten)]
+        verbose: clap_verbosity_flag::Verbosity,
+    }
+
+    let cli = Args::parse();
+
+    env_logger::Builder::new()
+        .filter_level(cli.verbose.log_level_filter())
+        .init();
+
+    let cfg = get_config(cli.config_path)?;
+
+    if cfg.window.full_screen {
+        std::env::set_var("SLINT_FULLSCREEN", "1");
+    }
+
+    let ui = AppWindow::new()?;
+
+    ui.global::<AppData>().set_width(cfg.window.width as f32);
+    ui.global::<AppData>().set_height(cfg.window.height as f32);
+    if cfg.window.full_screen {
+        ui.global::<AppData>().set_framed(false);
+    }
+
+    let rt = tokio::runtime::Runtime::new()?;
+
+    let handle = ui.as_weak();
+    rt.spawn(async move {
+        update_wallpaper(handle).await;
+    });
+
+    let handle = ui.as_weak();
+    let cfg_clone = cfg.window.clone();
+    rt.spawn(async move {
+        update_time(handle, cfg_clone).await;
+    });
+
+    let handle = ui.as_weak();
+    let cfg_clone = cfg.weather.clone();
+    rt.spawn(async move {
+        update_weather(handle, cfg_clone).await;
+    });
+
+    let handle = ui.as_weak();
+    let cfg_clone = cfg.todo.clone();
+    rt.spawn(async move {
+        update_todo(handle, cfg_clone).await;
+    });
+
+    ui.run()?;
+
+    Ok(())
 }

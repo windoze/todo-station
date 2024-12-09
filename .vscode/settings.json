@@ -4,11 +4,13 @@
     },
     "cSpell.words": [
         "dalek",
+        "Datelike",
         "pkcs",
         "precip",
         "serde",
         "skia",
         "subsec",
+        "Timelike",
         "winit"
     ]
 }

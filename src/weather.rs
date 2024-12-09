@@ -154,7 +154,13 @@ fn get_token(app_id: &str, key_id: &str, signing_key: &str) -> anyhow::Result<St
 
     // The only useful header field is kid, which is the key_id, the alg field is "EdDSA"
     let header = jwt_compact::Header::empty().with_key_id(key_id.to_owned());
-    let signing_key = ed25519_dalek::SigningKey::from_pkcs8_pem(signing_key).unwrap();
+    // The signing key is the private key in PEM format, with or without the header and footer
+    let key = if signing_key.starts_with("-----BEGIN") {
+        signing_key.to_string()
+    } else {
+        format!("-----BEGIN PRIVATE KEY-----\n{}\n-----END PRIVATE KEY-----\n", signing_key)
+    };
+    let signing_key = ed25519_dalek::SigningKey::from_pkcs8_pem(&key).unwrap();
     let result = Ed25519.token(&header, &claim, &signing_key)?;
     Ok(result)
 }
