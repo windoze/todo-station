@@ -1,5 +1,14 @@
 {
     "[rust]": {
         "editor.defaultFormatter": "rust-lang.rust-analyzer"
-    }
+    },
+    "cSpell.words": [
+        "dalek",
+        "pkcs",
+        "precip",
+        "serde",
+        "skia",
+        "subsec",
+        "winit"
+    ]
 }
