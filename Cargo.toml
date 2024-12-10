@@ -30,3 +30,4 @@ winapi = { version = "0.3", features = ["wincon"]}
 
 [build-dependencies]
 slint-build = "1.8.0"
+embed-resource = "*"

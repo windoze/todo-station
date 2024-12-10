@@ -3,6 +3,7 @@
         "editor.defaultFormatter": "rust-lang.rust-analyzer"
     },
     "cSpell.words": [
+        "cupertino",
         "dalek",
         "Datelike",
         "pkcs",
