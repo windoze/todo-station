@@ -213,8 +213,6 @@ fn main() -> anyhow::Result<()> {
 
     let ui = AppWindow::new()?;
 
-    ui.global::<AppData>().set_width(cfg.window.width as f32);
-    ui.global::<AppData>().set_height(cfg.window.height as f32);
     if cfg.window.full_screen {
         ui.global::<AppData>().set_framed(false);
     }

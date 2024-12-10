@@ -552,11 +552,9 @@ component TodoList {
 export component AppWindow inherits Window {
     title: "Todo Station";
     icon: @image-url("assets/app-icon.png");
-    width: AppData.width;
-    height: AppData.height;
     no-frame: !AppData.framed;
-    // width: 2560px;
-    // height: 1440px;
+    min-width: 800px;
+    min-height: 480px;
     Image {
         image-fit: cover;
         width: 100%;
@@ -639,8 +637,6 @@ export component AppWindow inherits Window {
 
 export global AppData {
     // Window
-    in-out property <length> width: 800px;
-    in-out property <length> height: 480px;
     in-out property <bool> framed: true;
     in-out property <string> font-family: "Source Han Sans";
     in-out property <image> background;

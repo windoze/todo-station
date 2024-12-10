@@ -11,8 +11,6 @@ use serde::Deserialize;
 pub struct WindowConfig {
     pub weekdays: Vec<String>,
     pub date_format: String,
-    pub width: i32,
-    pub height: i32,
     pub full_screen: bool,
 }
 
@@ -52,8 +50,6 @@ impl Default for WindowConfig {
                 "星期六".to_string(),
             ],
             date_format: "%Y年%m月%d日，%A".to_string(),
-            width: 800,
-            height: 480,
             full_screen: false,
         }
     }
