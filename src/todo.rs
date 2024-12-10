@@ -175,6 +175,7 @@ async fn do_get_token(app_id: String) -> anyhow::Result<String> {
 async fn load_token_cache() -> anyhow::Result<()> {
     debug!("Loading token cache");
     let path = AppDirs::new(Some("todo-station"), false).unwrap().state_dir;
+    debug!("Reading token cache from {}", path.join("token_cache.json").display());
     let cache = read(path.join("token_cache.json"))?;
     let cache: TokenCache = serde_json::from_slice(&cache)?;
     let mut token_cache = TOKEN_CACHE.lock().await;
@@ -311,7 +312,7 @@ pub async fn get_todo_list(app_id: String) -> anyhow::Result<Vec<TodoItemGroupDa
     let resp = client.get(&url).bearer_auth(token).send().await?;
     let body = resp.text().await?;
     let items: CalendarItems = serde_json::from_str(&body)?;
-    info!("Todo list retrieved");
+    info!("Todo list retrieved, {} items in next 7 days", items.value.len());
     Ok(items.into())
 }
 

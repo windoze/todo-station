@@ -4938,6 +4938,7 @@ dependencies = [
  "slint-build",
  "tokio",
  "toml",
+ "winapi",
 ]
 
 [[package]]

@@ -106,10 +106,10 @@ async fn update_wallpaper(handle: Weak<AppWindow>) {
                 .unwrap();
         }
 
-        // Sleep until the next 1AM UTC, it's about the time when the wallpaper changes
+        // Sleep until the next 9AM UTC, it's about the time when the wallpaper changes
         let now = chrono::Utc::now();
         let next_1am = now
-            .with_hour(1)
+            .with_hour(9)
             .unwrap()
             .with_minute(0)
             .unwrap()
@@ -178,6 +178,14 @@ async fn update_todo(handle: Weak<AppWindow>, cfg: TodoConfig) {
 }
 
 fn main() -> anyhow::Result<()> {
+    #[cfg(target_os = "windows")]
+    {
+        // Attach to parent console if it exists, so that we can see the console output.
+        // The app requires the console to display the device code login message.
+        unsafe {
+            winapi::um::wincon::AttachConsole(winapi::um::wincon::ATTACH_PARENT_PROCESS);
+        }
+    }
     #[derive(Debug, Clone, Parser)]
     struct Args {
         #[arg(long = "config")]

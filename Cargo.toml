@@ -25,5 +25,8 @@ lazy_static = "1.5"
 
 slint = { version = "1.8.0", default-features = false, features = ["std", "backend-winit", "renderer-skia", "compat-1-2"] }
 
+[target.'cfg(target_os="windows")'.dependencies]
+winapi = { version = "0.3", features = ["wincon"]}
+
 [build-dependencies]
 slint-build = "1.8.0"

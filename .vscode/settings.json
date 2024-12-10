@@ -11,6 +11,8 @@
         "skia",
         "subsec",
         "Timelike",
+        "winapi",
+        "wincon",
         "winit"
     ]
 }
