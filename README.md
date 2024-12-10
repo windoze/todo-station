@@ -1,6 +1,6 @@
 # ToDo Station
 
-一个基于Rust和Slint的简单日历和待办事项应用程序。
+一个基于Rust和[Slint](https://slint.dev/)的简单日历和待办事项应用程序。
 
 ## 使用说明
 
@@ -39,14 +39,27 @@ To sign in, use a web browser to open the page https://www.microsoft.com/link an
 
 Outlook日历及一些基本信息将会被授权给`00df9c7d-7b32-4e89-9e3e-834fff775318`这个Azure应用程序ID，如需使用其他的应用程序ID，请自行修改`[todo] app-id`，并可以参照下面的步骤创建新的Azure应用程序。
 
+App ID仅用于程序本身获取日历信息，不会导致信息被泄露给第三方，也不会让其他人拥有访问用户Outlook日历的权限。
+
 ### 创建新的Azure应用程序
 
 1. 参照[这篇文章](https://docs.microsoft.com/zh-cn/azure/active-directory/develop/quickstart-register-app)创建一个新的Azure应用程序。
 2. 设置App权限，包含`Calendars.Read`、`offline_access`、`openid`、`profile`，注意这些是`Delegated`而非`Application`权限。
 3. 在`Authentication`中允许`Allow public client flows`。
 
+## 安全性
+
+* 本程序不会收集用户的任何信息，也不会将获取的数据传至任何第三方。
+* 本程序会将用户的和风天气密钥存储在本地，用于获取天气信息，程序不会将密钥传至任何第三方。
+* 本程序会将用户的Outlook授权token存储在本地，用于持续更新日历信息，程序不会将token传至任何第三方。
+* 本程序除必要的Web访问外不会与外部进行任何通信。必要的Web访问包括：
+    * 用于更新壁纸的必应每日图片API。
+    * 用于获取天气信息的和风天气API。
+    * 用于获取Outlook日历信息的登录认证API及Microsoft Graph API。
+
 ## 许可协议
 
 * 本项目基于MIT许可协议发布 - 查看[LICENSE](LICENSE)文件了解更多信息。
 * SourceHanSans-Regular字体基于SIL开源字体许可协议发布 - 查看[LICENSE.source-han-sans](LICENSE.source-han-sans)文件了解更多信息。
+* 天气图标来自[和风天气图标](https://github.com/qwd/Icons)，基于[MIT许可协议](https://github.com/qwd/Icons/blob/main/LICENSE)发布。
 * 其他第三方资产根据其各自的许可协议发布。

@@ -1,6 +1,6 @@
 import { Button, VerticalBox, HorizontalBox, ListView, GridBox } from "std-widgets.slint";
 
-import "assets/SourceHanSans-Regular.ttc";
+import "fonts/SourceHanSans-Regular.ttc";
 
 export struct Date {
     year: int,
@@ -550,6 +550,8 @@ component TodoList {
 }
 
 export component AppWindow inherits Window {
+    title: "Todo Station";
+    icon: @image-url("assets/app-icon.png");
     width: AppData.width;
     height: AppData.height;
     no-frame: !AppData.framed;

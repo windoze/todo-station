@@ -20,6 +20,10 @@ use weather::get_weather;
 
 slint::include_modules!();
 
+#[derive(rust_embed::Embed)]
+#[folder = "ui/assets"]
+struct Assets;
+
 async fn update_time(handle: Weak<AppWindow>, cfg: WindowConfig) {
     loop {
         // Update time every 100ms
@@ -56,15 +60,16 @@ async fn update_weather(handle: Weak<AppWindow>, cfg: WeatherConfig) {
         if let Ok(weather) =
             get_weather(&cfg.location, &cfg.app_id, &cfg.key_id, &cfg.signing_key).await
         {
-            let icon_path = format!("ui/assets/{}.svg", weather.weather_icon);
-            if let Ok(content) = tokio::fs::read(&icon_path).await {
+            let icon_path = format!("{}.svg", weather.weather_icon);
+            debug!("Weather icon path: {}", icon_path);
+            if let Some(file) = Assets::get(&icon_path) {
                 handle
                     .upgrade_in_event_loop(move |ui| {
                         ui.global::<AppData>()
                             .set_temperature(weather.temperature as i32);
                         ui.global::<AppData>().set_high(weather.high as i32);
                         ui.global::<AppData>().set_low(weather.low as i32);
-                        if let Ok(image) = slint::Image::load_from_svg_data(&content) {
+                        if let Ok(image) = slint::Image::load_from_svg_data(&file.data) {
                             ui.global::<AppData>().set_weather_icon(image);
                         }
                     })
