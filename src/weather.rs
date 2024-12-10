@@ -1,6 +1,7 @@
 use chrono::Duration;
 use ed25519_dalek::pkcs8::DecodePrivateKey;
 use jwt_compact::{alg::Ed25519, AlgorithmExt, Claims, TimeOptions};
+use log::{debug, info};
 use serde::{de, Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 
@@ -141,6 +142,8 @@ fn get_token(app_id: &str, key_id: &str, signing_key: &str) -> anyhow::Result<St
     // The token is signed locally with the private key and sent to the server
     // https://dev.qweather.com/docs/authentication/jwt/
 
+    debug!("Generating token for {}", app_id);
+
     #[derive(Debug, Clone, Serialize)]
     struct Claim {
         sub: String,
@@ -160,8 +163,10 @@ fn get_token(app_id: &str, key_id: &str, signing_key: &str) -> anyhow::Result<St
     } else {
         format!("-----BEGIN PRIVATE KEY-----\n{}\n-----END PRIVATE KEY-----\n", signing_key)
     };
+    debug!("Signing token");
     let signing_key = ed25519_dalek::SigningKey::from_pkcs8_pem(&key).unwrap();
     let result = Ed25519.token(&header, &claim, &signing_key)?;
+    debug!("Token generated");
     Ok(result)
 }
 
@@ -171,19 +176,23 @@ pub async fn get_weather(
     key_id: &str,
     signing_key: &str,
 ) -> anyhow::Result<Weather> {
+    info!("Getting weather for {}", location);
     let token = get_token(app_id, key_id, signing_key).unwrap();
 
+    info!("Getting current weather");
     let resp = reqwest::Client::new()
         .get("https://devapi.qweather.com/v7/weather/now")
         .query(&[("location", location)])
         .bearer_auth(&token);
     let now: WeatherNow = resp.send().await?.json().await?;
 
+    info!("Getting weather forecast");
     let resp = reqwest::Client::new()
         .get("https://devapi.qweather.com/v7/weather/7d")
         .query(&[("location", location)])
         .bearer_auth(&token);
     let daily: WeatherDaily = resp.send().await?.json().await?;
+    info!("Weather retrieved");
     Ok(Weather {
         temperature: now.now.temp,
         high: daily.daily[0].temp_max,

@@ -5,6 +5,7 @@ use std::{rc::Rc, time::Duration};
 
 use chrono::prelude::*;
 use clap::Parser;
+use log::{debug, info};
 use slint::{ModelRc, Rgb8Pixel, SharedPixelBuffer, VecModel, Weak};
 use tokio::time::sleep;
 
@@ -51,6 +52,7 @@ async fn update_time(handle: Weak<AppWindow>, cfg: WindowConfig) {
 async fn update_weather(handle: Weak<AppWindow>, cfg: WeatherConfig) {
     loop {
         // Update weather every hour
+        debug!("Getting weather");
         if let Ok(weather) =
             get_weather(&cfg.location, &cfg.app_id, &cfg.key_id, &cfg.signing_key).await
         {
@@ -80,6 +82,7 @@ async fn update_weather(handle: Weak<AppWindow>, cfg: WeatherConfig) {
             .with_nanosecond(0)
             .unwrap()
             + chrono::Duration::hours(1);
+        debug!("The next run of getting weather is at {}", begin_of_next_hour.to_utc());
         let duration = begin_of_next_hour - now;
         sleep(duration.to_std().unwrap_or_default()).await;
     }
@@ -88,6 +91,7 @@ async fn update_weather(handle: Weak<AppWindow>, cfg: WeatherConfig) {
 async fn update_wallpaper(handle: Weak<AppWindow>) {
     loop {
         // Update wallpaper every day
+        debug!("Getting wallpaper");
         if let Ok(wallpaper) = get_wallpaper().await {
             handle
                 .upgrade_in_event_loop(move |ui| {
@@ -114,6 +118,7 @@ async fn update_wallpaper(handle: Weak<AppWindow>) {
             .with_nanosecond(0)
             .unwrap()
             + chrono::Duration::days(1);
+        debug!("The next run of getting wallpaper is at {}", next_1am);
         let duration = next_1am - now;
         sleep(duration.to_std().unwrap_or_default()).await;
     }
@@ -155,6 +160,7 @@ impl From<todo::TodoItemGroupData> for TodoItemGroupData {
 async fn update_todo(handle: Weak<AppWindow>, cfg: TodoConfig) {
     loop {
         // Update todo every 10 minutes
+        debug!("Getting todo list");
         if let Ok(todo) = todo::get_todo_list(cfg.app_id.clone()).await {
             handle
                 .upgrade_in_event_loop(move |ui| {
@@ -204,24 +210,28 @@ fn main() -> anyhow::Result<()> {
 
     let handle = ui.as_weak();
     rt.spawn(async move {
+        info!("Starting wallpaper update task");
         update_wallpaper(handle).await;
     });
 
     let handle = ui.as_weak();
     let cfg_clone = cfg.window.clone();
     rt.spawn(async move {
+        info!("Starting time update task");
         update_time(handle, cfg_clone).await;
     });
 
     let handle = ui.as_weak();
     let cfg_clone = cfg.weather.clone();
     rt.spawn(async move {
+        info!("Starting weather update task");
         update_weather(handle, cfg_clone).await;
     });
 
     let handle = ui.as_weak();
     let cfg_clone = cfg.todo.clone();
     rt.spawn(async move {
+        info!("Starting todo update task");
         update_todo(handle, cfg_clone).await;
     });
 

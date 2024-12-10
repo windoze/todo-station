@@ -3,7 +3,7 @@ use std::{fs::read, sync::Arc};
 use azure_identity::device_code_flow;
 use chrono::{Days, Local, Timelike};
 use futures::StreamExt;
-use log::{debug, warn};
+use log::{debug, info, warn};
 use platform_dirs::AppDirs;
 use serde::{Deserialize, Serialize};
 
@@ -75,13 +75,20 @@ impl From<CalendarItems> for Vec<TodoItemGroupData> {
     fn from(val: CalendarItems) -> Self {
         let mut groups = std::collections::BTreeMap::new();
         for item in val.value {
-            let group_date = item.start.date_time.and_utc().with_timezone(&Local).date_naive();
+            let group_date = item
+                .start
+                .date_time
+                .and_utc()
+                .with_timezone(&Local)
+                .date_naive();
             let group_name = group_date.format("%m月%d日").to_string();
-            let group = groups.entry(group_date).or_insert_with(|| TodoItemGroupData {
-                group_name,
-                items: vec![],
-                active: true,
-            });
+            let group = groups
+                .entry(group_date)
+                .or_insert_with(|| TodoItemGroupData {
+                    group_name,
+                    items: vec![],
+                    active: true,
+                });
             group.items.push(item.into());
         }
         groups.into_values().collect()
@@ -120,8 +127,9 @@ async fn do_get_token(app_id: String) -> anyhow::Result<String> {
     let access_token = {
         let mut cache = TOKEN_CACHE.lock().await;
         if cache.expires_on < chrono::Utc::now() {
+            debug!("Token cache is expired, acquiring new token with device code flow");
             let client = Arc::new(reqwest::Client::new());
-            let phrase1 = device_code_flow::start(
+            let phase1 = device_code_flow::start(
                 client.clone(),
                 "consumers",
                 &app_id,
@@ -129,9 +137,10 @@ async fn do_get_token(app_id: String) -> anyhow::Result<String> {
             )
             .await
             .unwrap();
-            println!("{}", phrase1.message());
+            debug!("Phase 1 done, waiting for user to authorize");
+            println!("{}", phase1.message());
             let (access_token, expires_in, refresh_token) = loop {
-                match phrase1.stream().next().await {
+                match phase1.stream().next().await {
                     Some(Ok(resp)) => {
                         break (
                             resp.access_token().to_owned(),
@@ -141,15 +150,18 @@ async fn do_get_token(app_id: String) -> anyhow::Result<String> {
                     }
                     Some(Err(err)) => {
                         if err.to_string().contains("authorization_pending") {
+                            debug!("Authorization pending");
                             continue;
                         }
                         return Err(err.into());
                     }
                     None => {
+                        warn!("No response, token acquisition failed");
                         return Err(anyhow::anyhow!("No response"));
                     }
                 }
             };
+            debug!("User authorized, token cache updated");
             cache.access_token = access_token.secret().to_string();
             cache.expires_on = chrono::Utc::now() + chrono::Duration::seconds(expires_in as i64);
             cache.refresh_token = refresh_token.secret().to_string();
@@ -174,9 +186,13 @@ async fn load_token_cache() -> anyhow::Result<()> {
 async fn save_token_cache() -> anyhow::Result<()> {
     debug!("Saving token cache");
     let path = AppDirs::new(Some("todo-station"), false).unwrap().state_dir;
+    debug!("Creating cache directory at {:?}", path);
     std::fs::create_dir_all(&path)?;
-    let token_cache = TOKEN_CACHE.lock().await;
-    let cache = serde_json::to_vec(&*token_cache)?;
+    let cache = {
+        let token_cache = TOKEN_CACHE.lock().await;
+        serde_json::to_vec(&*token_cache)?
+    };
+    debug!("Writing token cache to file");
     std::fs::write(path.join("token_cache.json"), cache)?;
     debug!("Token cache saved");
     Ok(())
@@ -185,14 +201,18 @@ async fn save_token_cache() -> anyhow::Result<()> {
 async fn refresh_token(app_id: String) -> anyhow::Result<String> {
     debug!("Refreshing token");
     let access_token = {
-        let mut cache = TOKEN_CACHE.lock().await;
+        let refresh_token = {
+            let cache = TOKEN_CACHE.lock().await;
+            cache.refresh_token.clone()
+        };
         let client = Arc::new(reqwest::Client::new());
+        debug!("Refreshing token with refresh token");
         let resp = client
             .post("https://login.microsoftonline.com/common/oauth2/v2.0/token")
             .form(&[
                 ("client_id", app_id.as_str()),
                 ("scope", "openid offline_access user.read Calendars.Read"),
-                ("refresh_token", &cache.refresh_token),
+                ("refresh_token", &refresh_token),
                 ("grant_type", "refresh_token"),
             ])
             .send()
@@ -201,6 +221,8 @@ async fn refresh_token(app_id: String) -> anyhow::Result<String> {
         let token: serde_json::Value = serde_json::from_str(&body)?;
         let access_token = token["access_token"].as_str().unwrap();
         let expires_in = token["expires_in"].as_i64().unwrap();
+        debug!("Token refreshed, updating cache");
+        let mut cache = TOKEN_CACHE.lock().await;
         cache.access_token = access_token.to_string();
         cache.expires_on = chrono::Utc::now() + chrono::Duration::seconds(expires_in);
         cache.access_token.clone()
@@ -210,6 +232,7 @@ async fn refresh_token(app_id: String) -> anyhow::Result<String> {
 }
 
 async fn get_token(app_id: String) -> anyhow::Result<String> {
+    debug!("Getting token");
     let empty = {
         let cache = TOKEN_CACHE.lock().await;
         cache.access_token.is_empty()
@@ -218,9 +241,9 @@ async fn get_token(app_id: String) -> anyhow::Result<String> {
         debug!("Token cache is empty");
         match load_token_cache().await {
             Ok(_) => {
-                let expired = {
+                let (expired, expires_on) = {
                     let cache = TOKEN_CACHE.lock().await;
-                    cache.is_expired()
+                    (cache.is_expired(), cache.expires_on)
                 };
                 if expired {
                     debug!("Token cache is expired");
@@ -231,7 +254,7 @@ async fn get_token(app_id: String) -> anyhow::Result<String> {
                         do_get_token(app_id.clone()).await
                     }
                 } else {
-                    debug!("Token cache is valid");
+                    debug!("Token cache is valid until {}", expires_on);
                     let access_token = {
                         let cache = TOKEN_CACHE.lock().await;
                         cache.access_token.clone()
@@ -262,6 +285,7 @@ async fn get_token(app_id: String) -> anyhow::Result<String> {
 }
 
 pub async fn get_todo_list(app_id: String) -> anyhow::Result<Vec<TodoItemGroupData>> {
+    info!("Getting todo list");
     let token = get_token(app_id).await?;
     let client = reqwest::Client::new();
     let start_of_the_day = chrono::Local::now()
@@ -282,11 +306,12 @@ pub async fn get_todo_list(app_id: String) -> anyhow::Result<Vec<TodoItemGroupDa
         "https://graph.microsoft.com/v1.0/me/calendarview?startDateTime={}&endDateTime={}",
         start_of_the_day, end_of_the_day
     );
+    debug!("Requesting todo list from {}", url);
     // println!("curl -H 'Authorization: Bearer {}' '{}' ", token, url);
     let resp = client.get(&url).bearer_auth(token).send().await?;
     let body = resp.text().await?;
-    // println!("{}", body);
     let items: CalendarItems = serde_json::from_str(&body)?;
+    info!("Todo list retrieved");
     Ok(items.into())
 }
 

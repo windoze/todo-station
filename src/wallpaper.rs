@@ -1,3 +1,4 @@
+use log::{debug, info};
 use serde::Deserialize;
 
 const WALLPAPER_URL_BASE: &str = "https://www.bing.com";
@@ -15,12 +16,15 @@ struct WallpaperResponse {
 }
 
 pub async fn get_wallpaper() -> anyhow::Result<image::DynamicImage> {
+    info!("Fetching wallpaper from Bing");
     let resp = reqwest::Client::new().get(WALLPAPER_URL_JSON).send().await?;
     let wallpaper = resp.json::<WallpaperResponse>().await?;
 
     let image_url = format!("{}{}", WALLPAPER_URL_BASE, wallpaper.images[0].url);
+    debug!("Wallpaper URL: {}", image_url);
     let bytes = reqwest::Client::new().get(&image_url).send().await?.bytes().await?;
 
+    info!("Wallpaper fetched successfully");
     Ok(image::load_from_memory(&bytes)?) 
 }
 
