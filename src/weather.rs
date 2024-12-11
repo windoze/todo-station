@@ -161,7 +161,10 @@ fn get_token(app_id: &str, key_id: &str, signing_key: &str) -> anyhow::Result<St
     let key = if signing_key.starts_with("-----BEGIN") {
         signing_key.to_string()
     } else {
-        format!("-----BEGIN PRIVATE KEY-----\n{}\n-----END PRIVATE KEY-----\n", signing_key)
+        format!(
+            "-----BEGIN PRIVATE KEY-----\n{}\n-----END PRIVATE KEY-----\n",
+            signing_key
+        )
     };
     debug!("Signing token");
     let signing_key = ed25519_dalek::SigningKey::from_pkcs8_pem(&key).unwrap();

@@ -87,7 +87,10 @@ async fn update_weather(handle: Weak<AppWindow>, cfg: WeatherConfig) {
             .with_nanosecond(0)
             .unwrap()
             + chrono::Duration::hours(1);
-        debug!("The next run of getting weather is at {}", begin_of_next_hour.to_utc());
+        debug!(
+            "The next run of getting weather is at {}",
+            begin_of_next_hour.to_utc()
+        );
         let duration = begin_of_next_hour - now;
         sleep(duration.to_std().unwrap_or_default()).await;
     }
