@@ -210,24 +210,27 @@ mod tests {
 
     #[test]
     fn test_get_token() {
-        let sub = include_str!("../test/app-id.txt").trim();
-        let kid = include_str!("../test/key-id.txt").trim();
-        let signing_key = include_str!("../test/ed25519-private.pem");
-        let token = get_token(sub, kid, signing_key).unwrap();
+        let app = std::env::var("QWEATHER_APP_ID").unwrap();
+        let kid = std::env::var("QWEATHER_KEY_ID").unwrap();
+        let signing_key = std::env::var("QWEATHER_KEY").unwrap();
+        let token = get_token(&app, &kid, &signing_key).unwrap();
         println!("{}", token);
         assert_eq!(token.len(), 206);
     }
 
     #[tokio::test]
     async fn test_get_weather() {
-        let location = "101050311";
-        let sub = include_str!("../test/app-id.txt").trim();
-        let kid = include_str!("../test/key-id.txt").trim();
-        let signing_key = include_str!("../test/ed25519-private.pem");
-        let weather = get_weather(location, sub, kid, signing_key).await.unwrap();
+        let location = "101110113";
+        let app = std::env::var("QWEATHER_APP_ID").unwrap();
+        let kid = std::env::var("QWEATHER_KEY_ID").unwrap();
+        let signing_key = std::env::var("QWEATHER_KEY").unwrap();
+        let weather = get_weather(location, &app, &kid, &signing_key)
+            .await
+            .unwrap();
         println!("{:?}", weather);
-        assert!(weather.temperature > -100.0 && weather.temperature < 100.0);
-        assert!(weather.high > -40.0 && weather.high < 50.0);
-        assert!(weather.low > -40.0 && weather.low < 50.0);
+        // It should be, right?
+        assert!(weather.temperature > -50.0 && weather.temperature < 50.0);
+        assert!(weather.high > -50.0 && weather.high < 50.0);
+        assert!(weather.low > -50.0 && weather.low < 50.0);
     }
 }

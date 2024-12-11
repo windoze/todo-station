@@ -10,6 +10,7 @@
         "lightgray",
         "pkcs",
         "precip",
+        "QWEATHER",
         "serde",
         "skia",
         "subsec",

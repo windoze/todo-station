@@ -116,7 +116,7 @@ async fn update_wallpaper(handle: Weak<AppWindow>) {
 
         // Sleep until the next 9AM UTC, it's about the time when the wallpaper changes
         let now = chrono::Utc::now();
-        let next_1am = now
+        let next_update = now
             .with_hour(9)
             .unwrap()
             .with_minute(0)
@@ -125,9 +125,9 @@ async fn update_wallpaper(handle: Weak<AppWindow>) {
             .unwrap()
             .with_nanosecond(0)
             .unwrap()
-            + chrono::Duration::days(1);
-        debug!("The next run of getting wallpaper is at {}", next_1am);
-        let duration = next_1am - now;
+            + chrono::Duration::days(if now.hour() < 9 { 0 } else { 1 });
+        debug!("The next run of getting wallpaper is at {}", next_update);
+        let duration = next_update - now;
         sleep(duration.to_std().unwrap_or_default()).await;
     }
 }

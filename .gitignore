@@ -11,3 +11,5 @@
 **/*.rs.bk
 
 /test/
+
+.envrc
