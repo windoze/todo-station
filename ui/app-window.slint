@@ -229,8 +229,8 @@ component MonthView {
     }
 
     pure function get-weekday(year: int, month: int, day: int) -> int {
-    // Zeller's Congruence
-    return mod((mod(year,100) + floor(mod(year,100) / 4) + floor(floor(year / 100) / 4) - 2 * floor(year / 100) + floor(26 * (month + 1) / 10) + day - 1), 7);
+        // Zeller's Congruence
+        return mod((mod(year,100) + floor(mod(year,100) / 4) + floor(floor(year / 100) / 4) - 2 * floor(year / 100) + floor(26 * (month + 1) / 10) + day - 1), 7);
     }
 
     pure function get-line-num() -> int {
@@ -261,15 +261,14 @@ component MonthView {
 
     VerticalLayout {
         HorizontalLayout {
-            width: 100%;
-            height: 30px;
+            min-height: 25px;
+            max-height: 35px;
             for day in weekday-names: Text {
                 text: day;
                 font-family: root.font-family;
                 font-size: root.font-size;
                 color: root.weekday-color;
                 width: 14.28%;
-                height: parent.height;
                 vertical-alignment: center;
                 horizontal-alignment: center;
             }
@@ -282,11 +281,10 @@ component MonthView {
         }
 
         for row in 6: HorizontalLayout {
-            width: 100%;
-            height: 30px;
+            min-height: 25px;
+            max-height: 35px;
             for col in 7: Rectangle {
                 width: 14.28%;
-                height: parent.height;
                 background: day-at-cell(row, col) == root.today.day ? root.today-background-color : root.day-background-color;
                 border-radius: 5px;
                 Text {
@@ -305,8 +303,6 @@ component MonthView {
 }
 
 component Weather {
-    width: 100%;
-    height: 80px;
     in-out property <int> temperature;
     in-out property <int> high;
     in-out property <int> low;
@@ -321,49 +317,55 @@ component Weather {
     private property <string> high-text: high + unit;
     private property <string> low-text: low + unit;
 
-    horizontal-stretch: 0;
-    Rectangle {
+    HorizontalBox {
         width: 100%;
-        height: 100px;
+        height: 40px;
+        Rectangle {
+            height: 1px;
+            horizontal-stretch: 1;
+        }
+        Image {
+            vertical-alignment: center;
+            horizontal-alignment: center;
+            width: 40px;
+            height: 40px;
+            colorize: white;
+            image-fit: cover;
+            source: root.weather-icon;
+        }
         VerticalLayout {
-            width: 100%;
-            height: 100%;
-            HorizontalBox {
-                width: 100%;
-                Text {
-                    height: 35px;
-                    text: root.temp-text;
-                    font-family: root.font-family;
-                    font-size: 28px;
-                    color: root.text-color;
-                    horizontal-alignment: right;
-                    vertical-alignment: bottom;
-                }
-
-                Image {
-                    vertical-alignment: center;
-                    horizontal-alignment: center;
-                    width: 32px;
-                    height: 32px;
-                    colorize: white;
-                    source: root.weather-icon;
-                }
+            Rectangle {
+                height: 8px;
             }
-
-            HorizontalLayout {
-                Text {
-                    text: root.high-tag + ": " + root.high-text + "   " + root.low-tag + ": " + root.low-text;
-                    font-family: root.font-family;
-                    font-size: 20px;
-                    color: root.text-color;
-                    horizontal-alignment: right;
-                    vertical-alignment: center;
-                }
-                Rectangle {
-                    width: 15px;
-                    height: 10px;
-                    background: #00000000;
-                }
+            Text {
+                height: 32px;
+                text: root.temp-text;
+                font-family: root.font-family;
+                font-size: 32px;
+                color: root.text-color;
+                horizontal-alignment: right;
+                vertical-alignment: bottom;
+            }
+        }
+        VerticalLayout {
+            height: 40px;
+            Text {
+                height: 20px;
+                text: root.high-tag + ": " + root.high-text;
+                font-family: root.font-family;
+                font-size: 15px;
+                color: root.text-color;
+                horizontal-alignment: left;
+                vertical-alignment: center;
+            }
+            Text {
+                height: 20px;
+                text: root.low-tag + ": " + root.low-text;
+                font-family: root.font-family;
+                font-size: 15px;
+                color: root.text-color;
+                horizontal-alignment: left;
+                vertical-alignment: center;
             }
         }
     }
@@ -553,8 +555,8 @@ export component AppWindow inherits Window {
     title: "Todo Station";
     icon: @image-url("assets/app-icon.png");
     no-frame: !AppData.framed;
-    min-width: 800px;
-    min-height: 480px;
+    min-width: 700px;
+    min-height: 420px;
     Image {
         image-fit: cover;
         width: 100%;
@@ -573,7 +575,7 @@ export component AppWindow inherits Window {
         width: 100%;
         height: 100%;
         VerticalBox {
-            width: 40%;
+            width: 30%;
             height: 100%;
             Clock {
                 height: 120px;
@@ -586,11 +588,6 @@ export component AppWindow inherits Window {
                 active-color: AppData.active-color;
             }
 
-            Rectangle {
-                width: 100%;
-                height: 5px;
-            }
-
             MonthView {
                 today: AppData.current-date;
                 font-family: AppData.font-family;
@@ -598,6 +595,11 @@ export component AppWindow inherits Window {
                 weekday-color: AppData.active-color;
                 today-color: AppData.highlight-color;
                 today-background-color: AppData.strong-background-color;
+            }
+
+            Rectangle {
+                min-height: 5px;
+                vertical-stretch: 1;
             }
 
             Weather {
@@ -608,11 +610,6 @@ export component AppWindow inherits Window {
                 font-family: AppData.font-family;
                 text-color: AppData.active-color;
             }
-
-            Rectangle {
-                width: 100%;
-                height: 50px;
-            }
         }
 
         Rectangle {
@@ -622,7 +619,7 @@ export component AppWindow inherits Window {
         }
 
         TodoList {
-            width: 60%;
+            width: 70%;
             height: 100%;
             groups: AppData.todo-list;
             current-time: AppData.current-time;
@@ -651,17 +648,30 @@ export global AppData {
     in-out property <bool> use-24-hour: false;
     in-out property <bool> second-blink-on: true;
     in-out property <Time> current-time: { hour: 0, minute: 0, second: 0 };
-    in-out property <string> date-string;
+    in-out property <string> date-string: "...";
 
     // Calendar
-    in-out property <Date> current-date: { year: 2024, month: 1, day: 1 };
+    in-out property <Date> current-date: { year: 2024, month: 6, day: 1 };
 
     // Weather
     in-out property <int> temperature: 0;
     in-out property <int> high: 0;
     in-out property <int> low: 0;
-    in-out property <image> weather-icon;
+    in-out property <image> weather-icon: @image-url("assets/100.svg");
 
     // To-do list
-    in-out property <[TodoItemGroupData]> todo-list;
+    in-out property <[TodoItemGroupData]> todo-list: [
+        {
+            group-name: "...",
+            items: [
+                {
+                    text: "...",
+                    start-time: { hour: 0, minute: 0, second: 0 },
+                    end-time: { hour: 0, minute: 0, second: 0 },
+                    active: true,
+                    show-time: true,
+                }
+            ],
+        }
+    ];
 }

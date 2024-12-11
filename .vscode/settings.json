@@ -7,6 +7,7 @@
         "cupertino",
         "dalek",
         "Datelike",
+        "lightgray",
         "pkcs",
         "precip",
         "serde",
@@ -15,6 +16,7 @@
         "Timelike",
         "winapi",
         "wincon",
-        "winit"
+        "winit",
+        "Zeller's"
     ]
 }
