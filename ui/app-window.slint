@@ -29,13 +29,15 @@ export struct TodoItemGroupData {
 }
 
 component Clock {
+    max-height: 100px;
+
     in-out property <Time> time;
-    in-out property <string> date-string;
+    in-out property <string> date-string: "2024年12月12日，星期一";
     in-out property <bool> use-24-hour: false;
     in-out property <bool> second-blink-on: true;
     in-out property <brush> highlight-color: #FFFFFF;
     in-out property <brush> active-color: #FFFFFFC0;
-    in-out property <string> font-family;
+    in-out property <string> font-family: "Source Han Sans";
     in-out property <length> time-font-size: 60px;
     in-out property <length> date-font-size: 24px;
     in-out property <[string]> time-range-tags: [
@@ -183,19 +185,13 @@ component Clock {
                 visible: !root.use-24-hour;
             }
         }
-        HorizontalBox {
+        Text {
             height: 30px;
-            Rectangle {
-                width: 10px;
-                height: 10px;
-            }
-            Text {
-                text: root.date-string;
-                font-family: root.font-family;
-                font-size: 24px;
-                color: root.active-color;
-                horizontal-alignment: left;
-            }
+            text: root.date-string;
+            font-family: root.font-family;
+            font-size: 24px;
+            color: root.active-color;
+            horizontal-alignment: left;
         }
     }
 }
@@ -233,26 +229,26 @@ component MonthView {
         return mod((mod(year,100) + floor(mod(year,100) / 4) + floor(floor(year / 100) / 4) - 2 * floor(year / 100) + floor(26 * (month + 1) / 10) + day - 1), 7);
     }
 
-    pure function get-line-num() -> int {
+    function get-line-num() -> int {
         return ceil((self.current-month-days + self.start-day) / 7);
     }
 
-    pure function get-line-length(index: int) -> int {
+    function get-line-length(index: int) -> int {
         if index == 0 {
             return 7 - self.start-day;
         }
         return ((current-month-days - (7 - self.start-day)) / 7 / index) >= 1 ? 7 : (end-day + 1);
     }
 
-    pure function get-day(item: int, index: int) -> int {
+    function get-day(item: int, index: int) -> int {
         return ((item + 1) + index * 7) - (index == 0 ? 0 : self.start-day);
     }
 
-    pure function day-at-cell(row: int, col: int) -> int {
+    function day-at-cell(row: int, col: int) -> int {
         return (row * 7) + col - self.start-day + 1;
     }
 
-    pure function format-day(day: int) -> string {
+    function format-day(day: int) -> string {
         if day > 0 && day <= self.current-month-days {
             return day;
         }
@@ -280,7 +276,7 @@ component MonthView {
             background: today-background-color;
         }
 
-        for row in 6: HorizontalLayout {
+        for row in root.get-line-num(): HorizontalLayout {
             min-height: 25px;
             max-height: 35px;
             for col in 7: Rectangle {
@@ -303,6 +299,7 @@ component MonthView {
 }
 
 component Weather {
+    max-height: 40px;
     in-out property <int> temperature;
     in-out property <int> high;
     in-out property <int> low;
@@ -334,6 +331,7 @@ component Weather {
             source: root.weather-icon;
         }
         VerticalLayout {
+            height: 40px;
             Rectangle {
                 height: 8px;
             }
@@ -555,8 +553,8 @@ export component AppWindow inherits Window {
     title: "Todo Station";
     icon: @image-url("assets/app-icon.png");
     no-frame: !AppData.framed;
-    min-width: 700px;
-    min-height: 420px;
+    min-width: 640px;
+    min-height: 400px;
     Image {
         image-fit: cover;
         width: 100%;
@@ -578,7 +576,7 @@ export component AppWindow inherits Window {
             width: 30%;
             height: 100%;
             Clock {
-                height: 120px;
+                height: 100px;
                 use-24-hour: AppData.use-24-hour;
                 second-blink-on: AppData.second-blink-on;
                 time: AppData.current-time;
@@ -598,11 +596,12 @@ export component AppWindow inherits Window {
             }
 
             Rectangle {
-                min-height: 5px;
+                min-height: 1px;
                 vertical-stretch: 1;
             }
 
             Weather {
+                height: 40px;
                 temperature: AppData.temperature;
                 high: AppData.high;
                 low: AppData.low;
