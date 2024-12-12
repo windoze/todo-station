@@ -216,6 +216,8 @@ fn main() -> anyhow::Result<()> {
 
     let ui = AppWindow::new()?;
 
+    ui.global::<AppData>()
+        .set_font_scale(cfg.window.font_scale.unwrap_or(1.0));
     if cfg.window.full_screen {
         ui.global::<AppData>().set_framed(false);
     }

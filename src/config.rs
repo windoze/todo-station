@@ -11,6 +11,8 @@ pub struct WindowConfig {
     pub weekdays: Vec<String>,
     pub date_format: String,
     pub full_screen: bool,
+    #[serde(default)]
+    pub font_scale: Option<f32>,
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -50,6 +52,7 @@ impl Default for WindowConfig {
             ],
             date_format: "%Y年%m月%d日，%A".to_string(),
             full_screen: false,
+            font_scale: None,
         }
     }
 }
