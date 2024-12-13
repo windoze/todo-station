@@ -160,8 +160,12 @@ async fn refresh_token(app_id: String) -> anyhow::Result<String> {
             .await?;
         let body = resp.text().await?;
         let token: serde_json::Value = serde_json::from_str(&body)?;
-        let access_token = token["access_token"].as_str().unwrap();
-        let expires_in = token["expires_in"].as_u64().unwrap();
+        let access_token = token["access_token"]
+            .as_str()
+            .ok_or(anyhow::anyhow!("Failed to get access token"))?;
+        let expires_in = token["expires_in"]
+            .as_u64()
+            .ok_or(anyhow::anyhow!("Failed to get expiration"))?;
         debug!("Token refreshed, updating cache");
         TOKEN_CACHE
             .assign(access_token.to_string(), expires_in, refresh_token)
