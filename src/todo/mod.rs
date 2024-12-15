@@ -106,13 +106,13 @@ pub async fn get_todo_list(app_id: String) -> anyhow::Result<Vec<TodoItemGroupDa
     info!("Getting todo list");
     let token = get_token(app_id).await?;
     let client = get_client();
-    let start_of_the_day = chrono::Local::now()
+    let start_of_the_day = Local::now()
         .date_naive()
         .and_hms_opt(0, 0, 0)
         .unwrap()
         .and_utc()
         .format("%Y-%m-%dT%H:%M:%S%.fZ");
-    let end_of_the_day = chrono::Local::now()
+    let end_of_the_day = Local::now()
         .checked_add_days(Days::new(7))
         .unwrap()
         .date_naive()
