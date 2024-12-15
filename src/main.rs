@@ -5,7 +5,7 @@ use std::{rc::Rc, time::Duration};
 
 use chrono::prelude::*;
 use clap::Parser;
-use log::{debug, info};
+use log::{debug, info, warn};
 use slint::{ModelRc, Rgb8Pixel, SharedPixelBuffer, VecModel, Weak};
 use tokio::time::sleep;
 
@@ -57,23 +57,26 @@ async fn update_weather(handle: Weak<AppWindow>, cfg: WeatherConfig) {
     loop {
         // Update weather every hour
         debug!("Getting weather");
-        if let Ok(weather) =
-            get_weather(&cfg.location, &cfg.app_id, &cfg.key_id, &cfg.signing_key).await
-        {
-            let icon_path = format!("{}.svg", weather.weather_icon);
-            debug!("Weather icon path: {}", icon_path);
-            if let Some(file) = Assets::get(&icon_path) {
-                handle
-                    .upgrade_in_event_loop(move |ui| {
-                        ui.global::<AppData>()
-                            .set_temperature(weather.temperature as i32);
-                        ui.global::<AppData>().set_high(weather.high as i32);
-                        ui.global::<AppData>().set_low(weather.low as i32);
-                        if let Ok(image) = slint::Image::load_from_svg_data(&file.data) {
-                            ui.global::<AppData>().set_weather_icon(image);
-                        }
-                    })
-                    .unwrap();
+        match get_weather(&cfg.location, &cfg.app_id, &cfg.key_id, &cfg.signing_key).await {
+            Ok(weather) => {
+                let icon_path = format!("{}.svg", weather.weather_icon);
+                debug!("Weather icon path: {}", icon_path);
+                if let Some(file) = Assets::get(&icon_path) {
+                    handle
+                        .upgrade_in_event_loop(move |ui| {
+                            ui.global::<AppData>()
+                                .set_temperature(weather.temperature as i32);
+                            ui.global::<AppData>().set_high(weather.high as i32);
+                            ui.global::<AppData>().set_low(weather.low as i32);
+                            if let Ok(image) = slint::Image::load_from_svg_data(&file.data) {
+                                ui.global::<AppData>().set_weather_icon(image);
+                            }
+                        })
+                        .unwrap();
+                }
+            }
+            Err(e) => {
+                warn!("Failed to get weather, error: {}", e);
             }
         }
 
@@ -100,18 +103,23 @@ async fn update_wallpaper(handle: Weak<AppWindow>) {
     loop {
         // Update wallpaper every day
         debug!("Getting wallpaper");
-        if let Ok(wallpaper) = get_wallpaper().await {
-            handle
-                .upgrade_in_event_loop(move |ui| {
-                    let buffer = SharedPixelBuffer::<Rgb8Pixel>::clone_from_slice(
-                        wallpaper.as_rgb8().unwrap().as_raw(),
-                        wallpaper.width(),
-                        wallpaper.height(),
-                    );
-                    let image = slint::Image::from_rgb8(buffer);
-                    ui.global::<AppData>().set_background(image);
-                })
-                .unwrap();
+        match get_wallpaper().await {
+            Ok(wallpaper) => {
+                handle
+                    .upgrade_in_event_loop(move |ui| {
+                        let buffer = SharedPixelBuffer::<Rgb8Pixel>::clone_from_slice(
+                            wallpaper.as_rgb8().unwrap().as_raw(),
+                            wallpaper.width(),
+                            wallpaper.height(),
+                        );
+                        let image = slint::Image::from_rgb8(buffer);
+                        ui.global::<AppData>().set_background(image);
+                    })
+                    .unwrap();
+            }
+            Err(e) => {
+                warn!("Failed to get wallpaper, error: {}", e);
+            }
         }
 
         // Sleep until the next 9AM UTC, it's about the time when the wallpaper changes
@@ -169,19 +177,29 @@ async fn update_todo(handle: Weak<AppWindow>, cfg: TodoConfig) {
     loop {
         // Update todo every 10 minutes
         debug!("Getting todo list");
-        if let Ok(todo) = todo::get_todo_list(cfg.app_id.clone()).await {
-            handle
-                .upgrade_in_event_loop(move |ui| {
-                    let groups: Vec<TodoItemGroupData> =
-                        todo.into_iter().map(|list| list.into()).collect();
-                    ui.global::<AppData>()
-                        .set_todo_list(ModelRc::from(Rc::new(VecModel::from(groups))));
-                })
-                .unwrap();
+        match todo::get_todo_list(cfg.app_id.clone()).await {
+            Ok(todo) => {
+                handle
+                    .upgrade_in_event_loop(move |ui| {
+                        let groups: Vec<TodoItemGroupData> =
+                            todo.into_iter().map(|list| list.into()).collect();
+                        ui.global::<AppData>()
+                            .set_todo_list(ModelRc::from(Rc::new(VecModel::from(groups))));
+                    })
+                    .unwrap();
+            }
+            Err(e) => {
+                warn!("Failed to get todo list, error: {}", e);
+            }
         }
 
+        const INTERVAL: Duration = Duration::from_secs(600);
+        debug!(
+            "The next run of todo update is set to {}",
+            Utc::now() + INTERVAL
+        );
         // Sleep for 10 minutes
-        sleep(Duration::from_secs(600)).await;
+        sleep(INTERVAL).await;
     }
 }
 

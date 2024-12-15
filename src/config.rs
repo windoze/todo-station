@@ -5,6 +5,8 @@ use log::debug;
 use platform_dirs::AppDirs;
 use serde::Deserialize;
 
+const DEFAULT_APP_ID: &str = "00df9c7d-7b32-4e89-9e3e-834fff775318";
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct WindowConfig {
@@ -22,10 +24,25 @@ pub struct WeatherConfig {
     pub signing_key: String,
 }
 
-#[derive(Debug, Default, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct TodoConfig {
+    #[serde(default = "default_app_id")]
     pub app_id: String,
+}
+
+impl Default for TodoConfig {
+    fn default() -> Self {
+        Self {
+            app_id: default_app_id(),
+        }
+    }
+}
+
+fn default_app_id() -> String {
+    option_env!("TODO_APP_ID")
+        .unwrap_or(DEFAULT_APP_ID)
+        .to_string()
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -33,6 +50,7 @@ pub struct TodoConfig {
 pub struct AppConfig {
     pub window: WindowConfig,
     pub weather: WeatherConfig,
+    #[serde(default)]
     pub todo: TodoConfig,
 }
 
@@ -83,4 +101,12 @@ pub fn get_config<P: AsRef<Path>>(config_path: Option<P>) -> anyhow::Result<AppC
         return Ok(AppConfig::default());
     }
     Ok(toml::from_str::<AppConfig>(&config)?)
+}
+
+pub fn get_client() -> reqwest::Client {
+    reqwest::Client::builder()
+        .user_agent("todo-station")
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .unwrap()
 }

@@ -5,6 +5,8 @@ use log::{debug, info};
 use serde::{de, Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 
+use crate::config::get_client;
+
 fn de_float<'de, D: Deserializer<'de>>(deserializer: D) -> Result<f32, D::Error> {
     Ok(match Value::deserialize(deserializer)? {
         Value::String(s) => s.parse().map_err(de::Error::custom)?,
@@ -183,14 +185,15 @@ pub async fn get_weather(
     let token = get_token(app_id, key_id, signing_key).unwrap();
 
     info!("Getting current weather");
-    let resp = reqwest::Client::new()
+    let client = get_client();
+    let resp = client
         .get("https://devapi.qweather.com/v7/weather/now")
         .query(&[("location", location)])
         .bearer_auth(&token);
     let now: WeatherNow = resp.send().await?.json().await?;
 
     info!("Getting weather forecast");
-    let resp = reqwest::Client::new()
+    let resp = client
         .get("https://devapi.qweather.com/v7/weather/7d")
         .query(&[("location", location)])
         .bearer_auth(&token);

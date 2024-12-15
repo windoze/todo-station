@@ -6,6 +6,8 @@ use log::{debug, warn};
 use platform_dirs::AppDirs;
 use serde::{Deserialize, Serialize};
 
+use crate::config::get_client;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct TokenCache {
     access_token: String,
@@ -94,15 +96,14 @@ async fn do_get_token(app_id: String) -> anyhow::Result<String> {
     let access_token = {
         if TOKEN_CACHE.is_expired().await {
             debug!("Token cache is expired, acquiring new token with device code flow");
-            let client = Arc::new(reqwest::Client::new());
+            let client = Arc::new(get_client());
             let phase1 = device_code_flow::start(
                 client.clone(),
                 "consumers",
                 &app_id,
                 &["openid", "offline_access", "user.read", "Calendars.Read"],
             )
-            .await
-            .unwrap();
+            .await?;
             debug!("Phase 1 done, waiting for user to authorize");
             println!("{}", phase1.message());
             let (access_token, expires_in, refresh_token) = loop {
@@ -111,7 +112,11 @@ async fn do_get_token(app_id: String) -> anyhow::Result<String> {
                         break (
                             resp.access_token().to_owned(),
                             resp.expires_in,
-                            resp.refresh_token().unwrap().to_owned(),
+                            resp.refresh_token()
+                                .ok_or(anyhow::anyhow!(
+                                    "Failed to extract refresh token from auth response"
+                                ))?
+                                .to_owned(),
                         );
                     }
                     Some(Err(err)) => {
@@ -138,6 +143,9 @@ async fn do_get_token(app_id: String) -> anyhow::Result<String> {
         }
         TOKEN_CACHE.get_access_token().await
     };
+    if TOKEN_CACHE.get_access_token().await.is_empty() {
+        return Err(anyhow::anyhow!("Failed to get access token"));
+    }
     TOKEN_CACHE.save().await?;
     Ok(access_token)
 }
@@ -146,7 +154,7 @@ async fn refresh_token(app_id: String) -> anyhow::Result<String> {
     debug!("Refreshing token");
     let access_token = {
         let refresh_token = TOKEN_CACHE.get_refresh_token().await;
-        let client = Arc::new(reqwest::Client::new());
+        let client = Arc::new(get_client());
         debug!("Refreshing token with refresh token");
         let resp = client
             .post("https://login.microsoftonline.com/common/oauth2/v2.0/token")
@@ -177,7 +185,7 @@ async fn refresh_token(app_id: String) -> anyhow::Result<String> {
 }
 
 pub async fn get_token(app_id: String) -> anyhow::Result<String> {
-    debug!("Getting token");
+    debug!("Getting token for app id {}", app_id);
     if TOKEN_CACHE.get_access_token().await.is_empty() {
         debug!("Token cache is empty");
         match TOKEN_CACHE.load().await {
