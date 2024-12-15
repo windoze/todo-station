@@ -3,6 +3,8 @@ use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use token::get_token;
 
+use crate::config::get_client;
+
 mod token;
 
 #[derive(Debug, Clone)]
@@ -103,7 +105,7 @@ struct TimeWithZone {
 pub async fn get_todo_list(app_id: String) -> anyhow::Result<Vec<TodoItemGroupData>> {
     info!("Getting todo list");
     let token = get_token(app_id).await?;
-    let client = reqwest::Client::new();
+    let client = get_client();
     let start_of_the_day = chrono::Local::now()
         .date_naive()
         .and_hms_opt(0, 0, 0)

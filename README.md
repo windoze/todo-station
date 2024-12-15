@@ -5,6 +5,10 @@
 ## 使用说明
 
 1. 按照[getting-started guide](https://www.rust-lang.org/learn/get-started)安装Rust。
+2. 安装平台所需的依赖：
+    * Windows: 无需额外依赖。
+    * MacOS: 无需额外依赖。
+    * Linux: `sudo apt-get install build-essential libfontconfig-dev libfreetype-dev pkg-config cmake`
 2. 用以下命令编译程序（注意: 在macOs下使用Python 3.13会导致程序无法编译，建议使用Python 3.12）：
     ```
     cargo build --release
