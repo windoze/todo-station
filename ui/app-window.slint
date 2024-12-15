@@ -425,7 +425,7 @@ component TodoItem {
         HorizontalLayout {
             height: root.height;
             VerticalBox {
-                width: (root.show-time ? 90px : 10px) * AppData.font-scale;
+                width: root.show-time ? 90px : 10px;
                 height: root.height;
                 visible: root.show-time;
                 Text {
