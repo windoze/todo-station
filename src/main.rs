@@ -81,7 +81,7 @@ async fn update_weather(handle: Weak<AppWindow>, cfg: WeatherConfig) {
         }
 
         // Sleep until the next hour
-        let now = chrono::Local::now();
+        let now = Local::now();
         let begin_of_next_hour = now
             .with_minute(0)
             .unwrap()
@@ -123,7 +123,7 @@ async fn update_wallpaper(handle: Weak<AppWindow>) {
         }
 
         // Sleep until the next 9AM UTC, it's about the time when the wallpaper changes
-        let now = chrono::Utc::now();
+        let now = Utc::now();
         let next_update = now
             .with_hour(9)
             .unwrap()

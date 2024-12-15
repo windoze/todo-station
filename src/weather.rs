@@ -169,7 +169,7 @@ fn get_token(app_id: &str, key_id: &str, signing_key: &str) -> anyhow::Result<St
         )
     };
     debug!("Signing token");
-    let signing_key = ed25519_dalek::SigningKey::from_pkcs8_pem(&key).unwrap();
+    let signing_key = ed25519_dalek::SigningKey::from_pkcs8_pem(&key)?;
     let result = Ed25519.token(&header, &claim, &signing_key)?;
     debug!("Token generated");
     Ok(result)
@@ -182,7 +182,10 @@ pub async fn get_weather(
     signing_key: &str,
 ) -> anyhow::Result<Weather> {
     info!("Getting weather for {}", location);
-    let token = get_token(app_id, key_id, signing_key).unwrap();
+    // The operation cannot continue without a token, panic here because it's a unrecoverable error
+    // Other errors are mostly recoverable, return a result so the main loop can continue
+    let token =
+        get_token(app_id, key_id, signing_key).expect("Failed to get token, cannot continue");
 
     info!("Getting current weather");
     let client = get_client();
