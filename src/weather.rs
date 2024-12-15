@@ -140,7 +140,7 @@ pub struct Weather {
 }
 
 fn get_token(app_id: &str, key_id: &str, signing_key: &str) -> anyhow::Result<String> {
-    // According to QWeather API, the sub field is the app_id, and uses Ed25519(EdDSA) algorithm
+    // According to QWeather API, the sub-field is the app_id, and uses Ed25519(EdDSA) algorithm
     // The token is signed locally with the private key and sent to the server
     // https://dev.qweather.com/docs/authentication/jwt/
 
@@ -151,7 +151,7 @@ fn get_token(app_id: &str, key_id: &str, signing_key: &str) -> anyhow::Result<St
         sub: String,
     }
 
-    // Claims include the sub field, the issuance time (iat), and the expiration time (exp)
+    // Claims include the subfield, the issuance time (iat), and the expiration time (exp)
     let claim = Claims::<Claim>::new(Claim {
         sub: app_id.to_owned(),
     })
@@ -182,7 +182,7 @@ pub async fn get_weather(
     signing_key: &str,
 ) -> anyhow::Result<Weather> {
     info!("Getting weather for {}", location);
-    // The operation cannot continue without a token, panic here because it's a unrecoverable error
+    // The operation cannot continue without a token, panic here because it's an unrecoverable error
     // Other errors are mostly recoverable, return a result so the main loop can continue
     let token =
         get_token(app_id, key_id, signing_key).expect("Failed to get token, cannot continue");

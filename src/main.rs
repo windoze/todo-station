@@ -31,7 +31,7 @@ async fn update_time(handle: Weak<AppWindow>, cfg: WindowConfig) {
         let cfg_clone = cfg.clone();
         handle
             .upgrade_in_event_loop(move |ui| {
-                let now = chrono::Local::now();
+                let now = Local::now();
                 ui.global::<AppData>().set_current_time(Time {
                     hour: now.hour() as i32,
                     minute: now.minute() as i32,
