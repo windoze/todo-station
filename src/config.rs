@@ -106,7 +106,7 @@ pub fn get_config<P: AsRef<Path>>(config_path: Option<P>) -> anyhow::Result<AppC
 pub fn get_client() -> reqwest::Client {
     reqwest::Client::builder()
         .user_agent("todo-station")
-        .timeout(std::time::Duration::from_secs(10))
+        .timeout(std::time::Duration::from_secs(60))
         .build()
         .unwrap()
 }
