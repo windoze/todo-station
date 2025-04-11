@@ -64,6 +64,7 @@ App ID仅用于程序本身获取日历信息，不会导致信息被泄露给�
 ## 许可协议
 
 * 本项目基于MIT许可协议发布 - 查看[LICENSE](LICENSE)文件了解更多信息。
+* `device_code_flow` 功能来自[Azure SDK for Rust](https://github.com/Azure/azure-sdk-for-rust)， 以[MIT许可协议](https://github.com/Azure/azure-sdk-for-rust/blob/36682f31ba86444967d4bfda441ebc7e249fddfb/LICENSE.txt)发布。
 * SourceHanSans-Regular字体基于SIL开源字体许可协议发布 - 查看[LICENSE.source-han-sans](LICENSE.source-han-sans)文件了解更多信息。
 * 天气图标来自[和风天气图标](https://github.com/qwd/Icons)，基于[MIT许可协议](https://github.com/qwd/Icons/blob/main/LICENSE)发布。
 * 其他第三方资产根据其各自的许可协议发布。
