@@ -1,6 +1,6 @@
 use std::{fs::read, sync::Arc};
 
-use azure_identity::device_code_flow;
+use crate::device_code_flow;
 use futures::StreamExt;
 use log::{debug, warn};
 use platform_dirs::AppDirs;
@@ -18,7 +18,7 @@ struct TokenCache {
 lazy_static::lazy_static! {
     static ref TOKEN_CACHE: tokio::sync::Mutex<TokenCache> = tokio::sync::Mutex::new(TokenCache {
         access_token: "".to_string(),
-        expires_on: chrono::Utc::now(),
+        expires_on: chrono::DateTime::UNIX_EPOCH,
         refresh_token: "".to_string(),
     });
 }
@@ -35,7 +35,13 @@ trait CacheSingleton {
 
 impl CacheSingleton for tokio::sync::Mutex<TokenCache> {
     async fn is_expired(&self) -> bool {
+        debug!("Checking if token cache is expired");
         let cache = self.lock().await;
+        debug!("Token cache expires on {}", cache.expires_on);
+        debug!(
+            "Token cache expired: {}",
+            cache.expires_on <= chrono::Utc::now() - chrono::Duration::seconds(30)
+        );
         cache.expires_on <= chrono::Utc::now() - chrono::Duration::seconds(30)
     }
 
@@ -94,6 +100,7 @@ impl CacheSingleton for tokio::sync::Mutex<TokenCache> {
 
 async fn do_get_token(app_id: String) -> anyhow::Result<String> {
     let access_token = {
+        debug!("Acquiring token with device code flow");
         if TOKEN_CACHE.is_expired().await {
             debug!("Token cache is expired, acquiring new token with device code flow");
             let client = Arc::new(get_client());

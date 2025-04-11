@@ -10,6 +10,7 @@ use slint::{ModelRc, Rgb8Pixel, SharedPixelBuffer, VecModel, Weak};
 use tokio::time::sleep;
 
 mod config;
+mod device_code_flow;
 mod todo;
 mod wallpaper;
 mod weather;

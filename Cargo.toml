@@ -7,7 +7,7 @@ edition = "2021"
 anyhow = "1.0"
 log = "0.4"
 env_logger = "0.11"
-chrono = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "4", features = ["derive"] }
 clap-verbosity-flag = "3"
 platform-dirs = "0.3"
@@ -17,17 +17,18 @@ serde_json = "1.0"
 jwt-compact = { version = "0.8", features = ["ed25519-dalek", "clock"] }
 ed25519-dalek = { version = "2.1", features = ["pem"] }
 tokio = { version = "1", features = ["full"] }
-reqwest = { version = "0.12", features = ["json", "gzip"] }
+reqwest = { version = "0.12", features = ["rustls-tls", "json", "gzip"] }
 image = "0.25"
 futures = "0.3"
-azure_identity = "0.21"
+azure_core = { version = "0.23", features = ["reqwest_rustls", "tokio"] }
 lazy_static = "1.5"
-slint = { version = "1.9.0", default-features = false, features = ["std", "backend-winit", "renderer-skia", "compat-1-2"] }
-rust-embed={ version = "8.5", features = ["debug-embed", "compression"] }
+slint = { version = "1.10.0", default-features = false, features = ["std", "backend-winit", "renderer-skia", "compat-1-2"] }
+rust-embed={ version = "8.7", features = ["debug-embed", "compression"] }
+url = "2.5.4"
 
 [target.'cfg(target_os="windows")'.dependencies]
 winapi = { version = "0.3", features = ["wincon"]}
 
 [build-dependencies]
-slint-build = "1.9.0"
+slint-build = "1.10.0"
 embed-resource = "3.0"

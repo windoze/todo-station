@@ -11,6 +11,7 @@
         "pkcs",
         "precip",
         "QWEATHER",
+        "rustls",
         "serde",
         "skia",
         "subsec",
