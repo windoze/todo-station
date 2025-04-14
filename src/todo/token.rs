@@ -1,6 +1,6 @@
 use std::{fs::read, sync::Arc};
 
-use crate::device_code_flow;
+use crate::{config::AadAuthFlow, device_code_flow};
 use futures::StreamExt;
 use log::{debug, warn};
 use platform_dirs::AppDirs;
@@ -98,7 +98,14 @@ impl CacheSingleton for tokio::sync::Mutex<TokenCache> {
     }
 }
 
-async fn do_get_token(app_id: String) -> anyhow::Result<String> {
+async fn do_get_token(app_id: String, auth_flow: AadAuthFlow) -> anyhow::Result<String> {
+    match auth_flow {
+        AadAuthFlow::DeviceCode => do_get_token_device_code(app_id).await,
+        AadAuthFlow::Browser => do_get_token_browser(app_id).await,
+    }
+}
+
+async fn do_get_token_device_code(app_id: String) -> anyhow::Result<String> {
     let access_token = {
         debug!("Acquiring token with device code flow");
         if TOKEN_CACHE.is_expired().await {
@@ -157,6 +164,10 @@ async fn do_get_token(app_id: String) -> anyhow::Result<String> {
     Ok(access_token)
 }
 
+async fn do_get_token_browser(_app_id: String) -> anyhow::Result<String> {
+    todo!("Start a web server and open the browser");
+}
+
 async fn refresh_token(app_id: String) -> anyhow::Result<String> {
     debug!("Refreshing token");
     let access_token = {
@@ -191,8 +202,8 @@ async fn refresh_token(app_id: String) -> anyhow::Result<String> {
     Ok(access_token)
 }
 
-pub async fn get_token(app_id: String) -> anyhow::Result<String> {
-    debug!("Getting token for app id {}", app_id);
+pub async fn get_token(app_id: String, auth_flow: AadAuthFlow) -> anyhow::Result<String> {
+    debug!("Getting token for app id {}, flow: {:?}", app_id, auth_flow);
     if TOKEN_CACHE.get_access_token().await.is_empty() {
         debug!("Token cache is empty");
         match TOKEN_CACHE.load().await {
@@ -203,7 +214,7 @@ pub async fn get_token(app_id: String) -> anyhow::Result<String> {
                         debug!("Token refreshed");
                         Ok(token)
                     } else {
-                        do_get_token(app_id.clone()).await
+                        do_get_token(app_id.clone(), auth_flow).await
                     }
                 } else {
                     debug!(
@@ -215,7 +226,7 @@ pub async fn get_token(app_id: String) -> anyhow::Result<String> {
             }
             Err(err) => {
                 warn!("Failed to load token cache: {}", err);
-                do_get_token(app_id).await
+                do_get_token(app_id, auth_flow).await
             }
         }
     } else {

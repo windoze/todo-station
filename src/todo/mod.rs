@@ -3,7 +3,7 @@ use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use token::get_token;
 
-use crate::config::get_client;
+use crate::config::{get_client, AadAuthFlow};
 
 mod token;
 
@@ -102,9 +102,12 @@ struct TimeWithZone {
     time_zone: String,
 }
 
-pub async fn get_todo_list(app_id: String) -> anyhow::Result<Vec<TodoItemGroupData>> {
+pub async fn get_todo_list(
+    app_id: String,
+    auth_flow: AadAuthFlow,
+) -> anyhow::Result<Vec<TodoItemGroupData>> {
     info!("Getting todo list");
-    let token = get_token(app_id).await?;
+    let token = get_token(app_id, auth_flow).await?;
     let client = get_client();
     let start_of_the_day = Local::now()
         .date_naive()
@@ -144,7 +147,9 @@ mod tests {
     #[ignore = "Needs interactive login"]
     async fn test_get_todo_list() {
         let app_id = std::env::var("AAD_APP_ID").unwrap().to_string();
-        let todo_list = get_todo_list(app_id).await.unwrap();
+        let todo_list = get_todo_list(app_id, AadAuthFlow::DeviceCode)
+            .await
+            .unwrap();
         println!("{:?}", todo_list);
     }
 }

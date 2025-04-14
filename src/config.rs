@@ -24,17 +24,28 @@ pub struct WeatherConfig {
     pub signing_key: String,
 }
 
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum AadAuthFlow {
+    DeviceCode,
+    Browser,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct TodoConfig {
     #[serde(default = "default_app_id")]
     pub app_id: String,
+
+    #[serde(default = "default_auth_flow")]
+    pub auth_flow: AadAuthFlow,
 }
 
 impl Default for TodoConfig {
     fn default() -> Self {
         Self {
             app_id: default_app_id(),
+            auth_flow: default_auth_flow(),
         }
     }
 }
@@ -43,6 +54,14 @@ fn default_app_id() -> String {
     option_env!("TODO_APP_ID")
         .unwrap_or(DEFAULT_APP_ID)
         .to_string()
+}
+
+fn default_auth_flow() -> AadAuthFlow {
+    match option_env!("AAD_AUTH_FLOW").unwrap_or("device-code") {
+        "device-code" => AadAuthFlow::DeviceCode,
+        "browser" => AadAuthFlow::Browser,
+        _ => AadAuthFlow::DeviceCode,
+    }
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]

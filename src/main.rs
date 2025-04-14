@@ -178,7 +178,7 @@ async fn update_todo(handle: Weak<AppWindow>, cfg: TodoConfig) {
     loop {
         // Update todo every 10 minutes
         debug!("Getting todo list");
-        match todo::get_todo_list(cfg.app_id.clone()).await {
+        match todo::get_todo_list(cfg.app_id.clone(), cfg.auth_flow).await {
             Ok(todo) => {
                 handle
                     .upgrade_in_event_loop(move |ui| {
