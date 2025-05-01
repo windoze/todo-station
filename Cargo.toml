@@ -22,7 +22,7 @@ image = "0.25"
 futures = "0.3"
 azure_core = { version = "0.23", features = ["reqwest_rustls", "tokio"] }
 lazy_static = "1.5"
-slint = { version = "1.10.0", default-features = false, features = ["std", "backend-winit", "renderer-skia", "compat-1-2"] }
+slint = { version = "1.11.0", default-features = false, features = ["std", "backend-winit", "renderer-skia", "compat-1-2"] }
 rust-embed={ version = "8.7", features = ["debug-embed", "compression"] }
 url = "2.5.4"
 
@@ -30,5 +30,5 @@ url = "2.5.4"
 winapi = { version = "0.3", features = ["wincon"]}
 
 [build-dependencies]
-slint-build = "1.10.0"
+slint-build = "1.11.0"
 embed-resource = "3.0"
