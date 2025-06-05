@@ -20,6 +20,8 @@ location = "101110113"
 # 登录和风天气官网，创建应用，获取以下参数，参见`https://dev.qweather.com/docs/configuration/project-and-key/`
 app-id = "AAAAAAAAAA"
 key-id = "BBBBBBBBBB"
+# 该选项用于获取天气数据的API地址，可以从`https://console.qweather.com/setting`获得，默认使用和风天气的开发API
+api-host = "https://devapi.qweather.com"
 # 生成方式参见`https://dev.qweather.com/docs/authentication/jwt/`
 # 将生成的私钥内容填写到这里，不包含开头结尾的`-----BEGIN PRIVATE KEY-----`和`-----END PRIVATE KEY-----`
 signing-key = "MC4C.........."
