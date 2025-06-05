@@ -176,6 +176,7 @@ fn get_token(app_id: &str, key_id: &str, signing_key: &str) -> anyhow::Result<St
 }
 
 pub async fn get_weather(
+    api_host: &str,
     location: &str,
     app_id: &str,
     key_id: &str,
@@ -190,7 +191,7 @@ pub async fn get_weather(
     info!("Getting current weather");
     let client = get_client();
     let resp = client
-        .get("https://devapi.qweather.com/v7/weather/now")
+        .get(format!("https://{}/v7/weather/now", api_host))
         .query(&[("location", location)])
         .bearer_auth(&token);
     let now: WeatherNow = resp.send().await?.json().await?;
@@ -226,11 +227,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_weather() {
+        let api_host = "devapi.qweather.com";
         let location = "101110113";
         let app = std::env::var("QWEATHER_APP_ID").unwrap();
         let kid = std::env::var("QWEATHER_KEY_ID").unwrap();
         let signing_key = std::env::var("QWEATHER_KEY").unwrap();
-        let weather = get_weather(location, &app, &kid, &signing_key)
+        let weather = get_weather(api_host, location, &app, &kid, &signing_key)
             .await
             .unwrap();
         println!("{:?}", weather);

@@ -18,10 +18,18 @@ pub struct WindowConfig {
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct WeatherConfig {
+    #[serde(default = "default_api_host")]
+    pub api_host: String,
     pub location: String,
     pub app_id: String,
     pub key_id: String,
     pub signing_key: String,
+}
+
+fn default_api_host() -> String {
+    option_env!("WEATHER_API_HOST")
+        .unwrap_or("devapi.qweather.com")
+        .to_string()
 }
 
 #[derive(Debug, Clone, Deserialize)]

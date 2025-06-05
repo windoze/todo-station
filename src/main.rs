@@ -58,7 +58,15 @@ async fn update_weather(handle: Weak<AppWindow>, cfg: WeatherConfig) {
     loop {
         // Update weather every hour
         debug!("Getting weather");
-        match get_weather(&cfg.location, &cfg.app_id, &cfg.key_id, &cfg.signing_key).await {
+        match get_weather(
+            &cfg.api_host,
+            &cfg.location,
+            &cfg.app_id,
+            &cfg.key_id,
+            &cfg.signing_key,
+        )
+        .await
+        {
             Ok(weather) => {
                 let icon_path = format!("{}.svg", weather.weather_icon);
                 debug!("Weather icon path: {}", icon_path);
