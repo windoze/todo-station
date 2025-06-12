@@ -13,8 +13,8 @@ use azure_core::http::headers;
 use azure_core::http::headers::content_type;
 use azure_core::http::HttpClient;
 use azure_core::http::Method;
+use azure_core::http::RawResponse;
 use azure_core::http::Request;
-use azure_core::http::Response;
 use azure_core::http::Url;
 use azure_core::json::from_json;
 use azure_core::Error;
@@ -136,7 +136,7 @@ impl DeviceCodePhaseOneResponse<'_> {
                         match post_form(http_client.clone(), url, encoded).await {
                             Ok(rsp) => {
                                 let rsp_status = rsp.status();
-                                let rsp_body = match rsp.into_raw_body().collect().await {
+                                let rsp_body = match rsp.into_body().collect().await {
                                     Ok(b) => b,
                                     Err(e) => return Some((Err(e), NextState::Finish)),
                                 };
@@ -179,7 +179,7 @@ async fn post_form(
     http_client: Arc<dyn HttpClient>,
     url: &str,
     form_body: String,
-) -> azure_core::Result<Response> {
+) -> azure_core::Result<RawResponse> {
     let url = Url::parse(url)?;
     let mut req = Request::new(url, Method::Post);
     req.insert_header(
