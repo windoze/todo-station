@@ -102,7 +102,7 @@ pub fn get_config<P: AsRef<Path>>(config_path: Option<P>) -> anyhow::Result<AppC
     let config_path: PathBuf = config_path
         .map(|p| p.as_ref().to_path_buf())
         .unwrap_or(get_config_file());
-    debug!("Config path: {:?}", config_path);
+    debug!("Config path: {config_path:?}");
     let config = std::fs::read_to_string(&config_path).unwrap_or_default();
     if config.is_empty() {
         debug!("No config file found, using default config");

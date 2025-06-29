@@ -85,7 +85,7 @@ impl CacheSingleton for tokio::sync::Mutex<TokenCache> {
     async fn save(&self) -> anyhow::Result<()> {
         debug!("Saving token cache");
         let path = AppDirs::new(Some("todo-station"), false).unwrap().state_dir;
-        debug!("Creating cache directory at {:?}", path);
+        debug!("Creating cache directory at {path:?}");
         std::fs::create_dir_all(&path)?;
         let cache = {
             let token_cache = self.lock().await;
@@ -192,7 +192,7 @@ async fn refresh_token(app_id: String) -> anyhow::Result<String> {
 }
 
 pub async fn get_token(app_id: String) -> anyhow::Result<String> {
-    debug!("Getting token for app id {}", app_id);
+    debug!("Getting token for app id {app_id}");
     if TOKEN_CACHE.get_access_token().await.is_empty() {
         debug!("Token cache is empty");
         match TOKEN_CACHE.load().await {
@@ -214,7 +214,7 @@ pub async fn get_token(app_id: String) -> anyhow::Result<String> {
                 }
             }
             Err(err) => {
-                warn!("Failed to load token cache: {}", err);
+                warn!("Failed to load token cache: {err}");
                 do_get_token(app_id).await
             }
         }

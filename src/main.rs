@@ -69,7 +69,7 @@ async fn update_weather(handle: Weak<AppWindow>, cfg: WeatherConfig) {
         {
             Ok(weather) => {
                 let icon_path = format!("{}.svg", weather.weather_icon);
-                debug!("Weather icon path: {}", icon_path);
+                debug!("Weather icon path: {icon_path}");
                 if let Some(file) = Assets::get(&icon_path) {
                     handle
                         .upgrade_in_event_loop(move |ui| {
@@ -85,7 +85,7 @@ async fn update_weather(handle: Weak<AppWindow>, cfg: WeatherConfig) {
                 }
             }
             Err(e) => {
-                warn!("Failed to get weather, error: {}", e);
+                warn!("Failed to get weather, error: {e}");
             }
         }
 
@@ -127,7 +127,7 @@ async fn update_wallpaper(handle: Weak<AppWindow>) {
                     .unwrap();
             }
             Err(e) => {
-                warn!("Failed to get wallpaper, error: {}", e);
+                warn!("Failed to get wallpaper, error: {e}");
             }
         }
 
@@ -143,7 +143,7 @@ async fn update_wallpaper(handle: Weak<AppWindow>) {
             .with_nanosecond(0)
             .unwrap()
             + chrono::Duration::days(if now.hour() < 9 { 0 } else { 1 });
-        debug!("The next run of getting wallpaper is at {}", next_update);
+        debug!("The next run of getting wallpaper is at {next_update}");
         let duration = next_update - now;
         sleep(duration.to_std().unwrap_or_default()).await;
     }
@@ -198,7 +198,7 @@ async fn update_todo(handle: Weak<AppWindow>, cfg: TodoConfig) {
                     .unwrap();
             }
             Err(e) => {
-                warn!("Failed to get todo list, error: {}", e);
+                warn!("Failed to get todo list, error: {e}");
             }
         }
 

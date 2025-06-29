@@ -121,10 +121,9 @@ pub async fn get_todo_list(app_id: String) -> anyhow::Result<Vec<TodoItemGroupDa
         .and_utc()
         .format("%Y-%m-%dT%H:%M:%S%.fZ");
     let url = format!(
-        "https://graph.microsoft.com/v1.0/me/calendarview?startDateTime={}&endDateTime={}",
-        start_of_the_day, end_of_the_day
+        "https://graph.microsoft.com/v1.0/me/calendarview?startDateTime={start_of_the_day}&endDateTime={end_of_the_day}",
     );
-    debug!("Requesting todo list from {}", url);
+    debug!("Requesting todo list from {url}");
     // println!("curl -H 'Authorization: Bearer {}' '{}' ", token, url);
     let resp = client.get(&url).bearer_auth(token).send().await?;
     let body = resp.text().await?;
@@ -145,6 +144,6 @@ mod tests {
     async fn test_get_todo_list() {
         let app_id = std::env::var("AAD_APP_ID").unwrap().to_string();
         let todo_list = get_todo_list(app_id).await.unwrap();
-        println!("{:?}", todo_list);
+        println!("{todo_list:?}");
     }
 }

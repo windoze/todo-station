@@ -24,7 +24,7 @@ pub async fn get_wallpaper() -> anyhow::Result<image::DynamicImage> {
     let wallpaper = resp.json::<WallpaperResponse>().await?;
 
     let image_url = format!("{}{}", WALLPAPER_URL_BASE, wallpaper.images[0].url);
-    debug!("Wallpaper URL: {}", image_url);
+    debug!("Wallpaper URL: {image_url}");
     let bytes = client.get(&image_url).send().await?.bytes().await?;
 
     info!("Wallpaper fetched successfully");

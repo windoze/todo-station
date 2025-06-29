@@ -2,6 +2,7 @@
 name = "todo-station"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.88"
 
 [dependencies]
 anyhow = "1.0"
@@ -22,7 +23,7 @@ image = "0.25"
 futures = "0.3"
 azure_core = { version = "0.25", features = ["reqwest_rustls", "tokio"] }
 lazy_static = "1.5"
-slint = { version = "1.11.0", default-features = false, features = ["std", "backend-winit", "renderer-skia", "compat-1-2"] }
+slint = { version = "1.12.1", features = ["backend-winit", "renderer-skia", "compat-1-2"] }
 rust-embed={ version = "8.7", features = ["debug-embed", "compression"] }
 url = "2.5.4"
 
@@ -30,5 +31,5 @@ url = "2.5.4"
 winapi = { version = "0.3", features = ["wincon"]}
 
 [build-dependencies]
-slint-build = "1.11.0"
+slint-build = "1.12.1"
 embed-resource = "3.0"

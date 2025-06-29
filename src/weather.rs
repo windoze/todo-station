@@ -144,7 +144,7 @@ fn get_token(app_id: &str, key_id: &str, signing_key: &str) -> anyhow::Result<St
     // The token is signed locally with the private key and sent to the server
     // https://dev.qweather.com/docs/authentication/jwt/
 
-    debug!("Generating token for {}", app_id);
+    debug!("Generating token for {app_id}");
 
     #[derive(Debug, Clone, Serialize)]
     struct Claim {
@@ -163,10 +163,7 @@ fn get_token(app_id: &str, key_id: &str, signing_key: &str) -> anyhow::Result<St
     let key = if signing_key.starts_with("-----BEGIN") {
         signing_key.to_string()
     } else {
-        format!(
-            "-----BEGIN PRIVATE KEY-----\n{}\n-----END PRIVATE KEY-----\n",
-            signing_key
-        )
+        format!("-----BEGIN PRIVATE KEY-----\n{signing_key}\n-----END PRIVATE KEY-----\n")
     };
     debug!("Signing token");
     let signing_key = ed25519_dalek::SigningKey::from_pkcs8_pem(&key)?;
@@ -182,7 +179,7 @@ pub async fn get_weather(
     key_id: &str,
     signing_key: &str,
 ) -> anyhow::Result<Weather> {
-    info!("Getting weather for {}", location);
+    info!("Getting weather for {location}");
     // The operation cannot continue without a token, panic here because it's an unrecoverable error
     // Other errors are mostly recoverable, return a result so the main loop can continue
     let token =
@@ -191,7 +188,7 @@ pub async fn get_weather(
     info!("Getting current weather");
     let client = get_client();
     let resp = client
-        .get(format!("https://{}/v7/weather/now", api_host))
+        .get(format!("https://{api_host}/v7/weather/now"))
         .query(&[("location", location)])
         .bearer_auth(&token);
     let now: WeatherNow = resp.send().await?.json().await?;
@@ -221,7 +218,7 @@ mod tests {
         let kid = std::env::var("QWEATHER_KEY_ID").unwrap();
         let signing_key = std::env::var("QWEATHER_KEY").unwrap();
         let token = get_token(&app, &kid, &signing_key).unwrap();
-        println!("{}", token);
+        println!("{token}");
         assert_eq!(token.len(), 206);
     }
 
@@ -235,7 +232,7 @@ mod tests {
         let weather = get_weather(api_host, location, &app, &kid, &signing_key)
             .await
             .unwrap();
-        println!("{:?}", weather);
+        println!("{weather:?}");
         // It should be, right?
         assert!(weather.temperature > -50.0 && weather.temperature < 50.0);
         assert!(weather.high > -50.0 && weather.high < 50.0);
