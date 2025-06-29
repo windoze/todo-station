@@ -19,6 +19,8 @@ use config::{get_config, TodoConfig, WeatherConfig, WindowConfig};
 use wallpaper::get_wallpaper;
 use weather::get_weather;
 
+use crate::config::get_config_path;
+
 slint::include_modules!();
 
 #[derive(rust_embed::Embed)]
@@ -225,6 +227,8 @@ fn main() -> anyhow::Result<()> {
     struct Args {
         #[arg(long = "config")]
         config_path: Option<std::path::PathBuf>,
+        #[arg(long = "edit", default_value = "false")]
+        open_editor: bool,
         #[command(flatten)]
         verbose: clap_verbosity_flag::Verbosity,
     }
@@ -234,6 +238,14 @@ fn main() -> anyhow::Result<()> {
     env_logger::Builder::new()
         .filter_level(cli.verbose.log_level_filter())
         .init();
+
+    if cli.open_editor {
+        let config_path = get_config_path(cli.config_path.clone());
+        debug!("Opening config file in editor: {config_path:?}");
+        edit::edit_file(config_path).inspect_err(|e| {
+            warn!("Failed to open config file in editor: {e}");
+        })?;
+    }
 
     let cfg = get_config(cli.config_path)?;
 

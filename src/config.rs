@@ -98,10 +98,14 @@ fn get_config_file() -> PathBuf {
     app_dirs.config_dir.join("config.toml")
 }
 
-pub fn get_config<P: AsRef<Path>>(config_path: Option<P>) -> anyhow::Result<AppConfig> {
-    let config_path: PathBuf = config_path
+pub fn get_config_path<P: AsRef<Path>>(config_path: Option<P>) -> PathBuf {
+    config_path
         .map(|p| p.as_ref().to_path_buf())
-        .unwrap_or(get_config_file());
+        .unwrap_or(get_config_file())
+}
+
+pub fn get_config<P: AsRef<Path>>(config_path: Option<P>) -> anyhow::Result<AppConfig> {
+    let config_path: PathBuf = get_config_path(config_path);
     debug!("Config path: {config_path:?}");
     let config = std::fs::read_to_string(&config_path).unwrap_or_default();
     if config.is_empty() {

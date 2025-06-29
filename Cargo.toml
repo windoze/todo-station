@@ -26,6 +26,7 @@ lazy_static = "1.5"
 slint = { version = "1.12.1", features = ["backend-winit", "renderer-skia", "compat-1-2"] }
 rust-embed={ version = "8.7", features = ["debug-embed", "compression"] }
 url = "2.5.4"
+edit = "0.1"
 
 [target.'cfg(target_os="windows")'.dependencies]
 winapi = { version = "0.3", features = ["wincon"]}
