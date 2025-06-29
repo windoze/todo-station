@@ -553,8 +553,9 @@ export component AppWindow inherits Window {
     title: "Todo Station";
     icon: @image-url("assets/app-icon.png");
     no-frame: !AppData.framed;
-    min-width: 640px;
-    min-height: 400px;
+    full-screen: true;
+    min-width: 1200px;
+    min-height: 800px;
     Image {
         image-fit: cover;
         width: 100%;
