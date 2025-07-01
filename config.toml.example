@@ -11,7 +11,7 @@ date-format = "%Y年%m月%d日，%A"
 # 在使用了HiDPI功能的设备上需设置为逻辑分辨率而非物理分辨率
 width = 800
 height = 480
-# 该选项在macOs下不能正常工作，请不要设置为true
+# 是否在全屏模式下运行，若为true则忽略窗口尺寸设置
 full-screen = false
 
 [weather]
